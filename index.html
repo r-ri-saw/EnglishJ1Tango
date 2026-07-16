@@ -1,0 +1,3895 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>重要問題チェック！</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+  :root {
+    --pink:#E8446A;--pink-light:#FFF0F3;--pink-mid:#F7C5D0;
+    --dark:#1A1A2E;--gray:#6B7280;--gray-light:#F3F4F6;--white:#FFFFFF;
+    --green:#10B981;--green-light:#ECFDF5;--red:#EF4444;--red-light:#FEF2F2;
+    --yellow:#F59E0B;--yellow-light:#FFFBEB;--blue:#3B82F6;--blue-light:#EFF6FF;
+    --purple:#8B5CF6;--purple-light:#F5F3FF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans JP',sans-serif;background:#F8F9FC;color:var(--dark);min-height:100vh;}
+  .header{background:var(--pink);padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(232,68,106,0.3);position:sticky;top:0;z-index:50;}
+  .header-badge{background:var(--white);color:var(--pink);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .header h1{color:var(--white);font-size:18px;font-weight:700;font-family:'Inter',sans-serif;}
+  .header-status{margin-left:auto;font-size:11px;color:rgba(255,255,255,0.85);}
+  .screen{display:none;padding:20px;max-width:680px;margin:0 auto;padding-bottom:60px;}
+  .screen.active{display:block;}
+
+  /* ── TOP / HOME ── */
+  .top-title{font-size:20px;font-weight:700;text-align:center;margin:20px 0 4px;}
+  .top-subtitle{font-size:13px;color:var(--gray);text-align:center;margin-bottom:20px;}
+  .section-label{font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.05em;margin:22px 0 10px;}
+  .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .quick-card{background:var(--white);border:2px solid #E5E7EB;border-radius:16px;padding:18px 14px;cursor:pointer;text-align:left;transition:all 0.15s;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+  .quick-card:hover{border-color:var(--pink-mid);transform:translateY(-2px);}
+  .quick-icon{font-size:26px;margin-bottom:6px;}
+  .quick-name{font-size:14px;font-weight:700;color:var(--dark);}
+  .quick-count{font-size:11px;color:var(--gray);margin-top:2px;}
+  .quick-count.hot{color:var(--red);font-weight:700;}
+
+  .subject-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .subject-card{background:var(--white);border:2px solid #E5E7EB;border-radius:18px;padding:22px 14px;cursor:pointer;text-align:center;transition:all 0.18s;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 10px rgba(0,0,0,0.05);}
+  .subject-card:hover{border-color:var(--pink);transform:translateY(-3px);}
+  .subject-icon{font-size:32px;margin-bottom:8px;}
+  .subject-name{font-size:15px;font-weight:700;color:var(--dark);}
+  .subject-progress{font-size:11px;color:var(--pink);font-weight:700;background:var(--pink-light);padding:3px 10px;border-radius:20px;display:inline-block;margin-top:8px;}
+
+  .update-btn{width:100%;padding:14px;background:var(--white);border:2px dashed #D1D5DB;color:var(--gray);border-radius:14px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;margin-top:24px;transition:all 0.15s;}
+  .update-btn:hover{border-color:var(--pink);color:var(--pink);}
+  .update-btn:disabled{opacity:0.6;cursor:default;}
+  .update-status{text-align:center;font-size:12px;color:var(--gray);margin-top:8px;min-height:16px;}
+  .update-status.ok{color:var(--green);}
+  .update-status.err{color:var(--red);}
+  .last-updated{text-align:center;font-size:11px;color:var(--gray);margin-top:6px;}
+
+  /* ── SUB HEADER ── */
+  .sub-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .back-btn{background:var(--white);border:none;width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.1);flex-shrink:0;}
+  .sub-title{font-size:17px;font-weight:700;color:var(--dark);}
+
+  /* ── UNIT SELECT ── */
+  .select-sub{color:var(--gray);font-size:13px;margin-bottom:16px;}
+  .unit-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
+  .unit-card{background:var(--white);border:2px solid #E5E7EB;border-radius:12px;padding:14px 16px;cursor:pointer;transition:all 0.15s;position:relative;}
+  .unit-card:hover{border-color:var(--pink-mid);}
+  .unit-card.selected{border-color:var(--pink);background:var(--pink-light);}
+  .unit-card.selected::after{content:'✓';position:absolute;top:10px;right:12px;color:var(--pink);font-weight:700;font-size:16px;}
+  .unit-subject-tag{font-size:9px;color:var(--purple);background:var(--purple-light);padding:1px 7px;border-radius:10px;display:inline-block;margin-bottom:4px;font-weight:700;}
+  .unit-name{font-size:13px;font-weight:700;color:var(--dark);font-family:'Noto Sans JP',sans-serif;}
+  .unit-count{font-size:11px;color:var(--gray);margin-top:2px;}
+  .unit-mastery{margin-top:8px;height:4px;background:#E5E7EB;border-radius:2px;overflow:hidden;}
+  .unit-mastery-bar{height:100%;background:var(--pink);border-radius:2px;transition:width 0.3s;}
+  .select-all-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .btn-text{background:none;border:none;color:var(--pink);font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;padding:4px 0;}
+  .btn-text:hover{text-decoration:underline;}
+  .mode-section{margin-bottom:22px;}
+  .mode-label{font-size:13px;font-weight:700;color:var(--gray);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;}
+  .mode-row{display:flex;gap:10px;}
+  .mode-btn{flex:1;padding:14px;border:2px solid #E5E7EB;border-radius:12px;background:var(--white);cursor:pointer;text-align:center;transition:all 0.15s;font-family:'Noto Sans JP',sans-serif;}
+  .mode-btn:hover{border-color:var(--pink-mid);}
+  .mode-btn.selected{border-color:var(--pink);background:var(--pink-light);}
+  .mode-icon{font-size:20px;margin-bottom:4px;}
+  .mode-name{font-size:13px;font-weight:700;}
+  .mode-desc{font-size:11px;color:var(--gray);margin-top:2px;}
+  .start-btn{width:100%;padding:16px;background:var(--pink);color:var(--white);border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.15s;box-shadow:0 4px 14px rgba(232,68,106,0.35);}
+  .start-btn:hover{background:#D63660;transform:translateY(-1px);}
+  .start-btn:disabled{background:#D1D5DB;box-shadow:none;cursor:default;transform:none;}
+
+  /* ── QUIZ HEADER ── */
+  .quiz-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+  .progress-wrap{flex:1;}
+  .progress-text{font-size:12px;color:var(--gray);margin-bottom:4px;display:flex;justify-content:space-between;}
+  .progress-bar{height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--pink);border-radius:3px;transition:width 0.3s;}
+  .streak-badge{background:var(--yellow-light);color:var(--yellow);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700;white-space:nowrap;}
+  .sr-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;margin-bottom:10px;font-weight:700;}
+  .sr-badge.new{background:var(--blue-light);color:var(--blue);}
+  .sr-badge.review{background:var(--yellow-light);color:var(--yellow);}
+  .sr-badge.weak{background:var(--red-light);color:var(--red);}
+
+  /* ── CARD ── */
+  .card{background:var(--white);border-radius:20px;padding:32px 28px;box-shadow:0 4px 20px rgba(0,0,0,0.07);margin-bottom:16px;text-align:center;}
+  .card-label{font-size:11px;font-weight:700;color:var(--gray);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;}
+  .card-jp{font-size:24px;font-weight:700;line-height:1.5;margin-bottom:8px;word-break:break-word;}
+  .card-en{font-size:30px;font-weight:700;font-family:'Inter',sans-serif;color:var(--dark);letter-spacing:0.01em;margin-bottom:8px;word-break:break-word;line-height:1.3;}
+  .card-unit-tag{font-size:11px;color:var(--gray);background:var(--gray-light);padding:2px 10px;border-radius:20px;display:inline-block;}
+
+  .answer-reveal{background:var(--white);border-radius:16px;padding:20px 24px;box-shadow:0 2px 10px rgba(0,0,0,0.06);margin-bottom:16px;text-align:left;}
+  .answer-word{font-size:20px;font-weight:700;font-family:'Inter',sans-serif;color:var(--pink);line-height:1.6;word-break:break-word;}
+  .answer-memo{margin-top:14px;padding-top:14px;border-top:1px solid #F3F4F6;font-size:13px;color:var(--gray);line-height:1.6;}
+  .answer-memo .tip-icon{margin-right:4px;}
+
+  .self-check-row{display:flex;gap:10px;margin-bottom:12px;}
+  .check-btn{flex:1;padding:16px;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.15s;}
+  .check-btn.correct{background:var(--green-light);color:var(--green);border:2px solid var(--green);}
+  .check-btn.wrong{background:var(--red-light);color:var(--red);border:2px solid var(--red);}
+  .check-btn:hover{filter:brightness(0.96);transform:translateY(-1px);}
+  .reveal-btn{width:100%;padding:16px;background:var(--dark);color:var(--white);border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.15s;}
+  .reveal-btn:hover{background:#2D2D44;}
+
+  /* ── 4-choice ── */
+  .choices-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px;}
+  .choice-btn{padding:20px;background:var(--white);border:2px solid #E5E7EB;border-radius:16px;font-size:16px;font-weight:500;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.15s;text-align:left;line-height:1.5;min-height:64px;display:flex;align-items:center;gap:12px;}
+  .choice-num{width:28px;height:28px;border-radius:50%;background:#F3F4F6;color:var(--gray);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+  .choice-btn:hover:not(:disabled){border-color:var(--pink-mid);background:var(--pink-light);}
+  .choice-btn:hover:not(:disabled) .choice-num{background:var(--pink-mid);color:var(--pink);}
+  .choice-btn.correct-ans{border-color:var(--green);background:var(--green-light);color:var(--green);}
+  .choice-btn.correct-ans .choice-num{background:var(--green);color:#fff;}
+  .choice-btn.wrong-ans{border-color:var(--red);background:var(--red-light);color:var(--red);}
+  .choice-btn.wrong-ans .choice-num{background:var(--red);color:#fff;}
+  .choice-btn:disabled{cursor:default;}
+  .feedback-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:100;}
+  .feedback-mark{font-size:120px;opacity:0;transform:scale(0.5);transition:opacity 0.15s,transform 0.15s;}
+  .feedback-mark.show{opacity:0.85;transform:scale(1);}
+  .feedback-mark.hide{opacity:0;transform:scale(1.3);transition:opacity 0.35s,transform 0.35s;}
+  .next-btn{width:100%;padding:16px;background:var(--pink);color:var(--white);border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.15s;display:none;}
+  .next-btn.visible{display:block;}
+  .next-btn:hover{background:#D63660;}
+
+  /* ── PHONICS PANEL ── */
+  .phonics-panel{background:var(--white);border-radius:16px;padding:18px 20px;box-shadow:0 2px 10px rgba(0,0,0,0.06);margin-bottom:16px;}
+  .phonics-word-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .phonics-word{font-size:20px;font-weight:700;font-family:'Inter',sans-serif;}
+  .speak-btn{background:var(--pink-light);border:none;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .speak-btn:hover{background:var(--pink-mid);}
+  .phonics-ipa{font-size:14px;color:var(--gray);font-family:'Inter',sans-serif;margin-bottom:10px;}
+  .phonics-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+  .phonics-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 10px;border-radius:8px;}
+  .phonics-row.c0{background:#FFF0F3;} .phonics-row.c1{background:#EFF6FF;} .phonics-row.c2{background:#ECFDF5;}
+  .phonics-row.c3{background:#FFFBEB;} .phonics-row.c4{background:#F5F3FF;}
+  .phonics-chunk{font-weight:700;font-family:'Inter',sans-serif;}
+  .phonics-arrow{color:var(--gray);}
+  .phonics-sound{color:var(--dark);}
+  .tip-card{background:var(--pink-light);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--dark);line-height:1.6;display:flex;gap:6px;}
+
+  /* ── RESULT ── */
+  .result-card{background:var(--white);border-radius:20px;padding:32px 28px;box-shadow:0 4px 20px rgba(0,0,0,0.07);text-align:center;margin-bottom:16px;}
+  .result-emoji{font-size:52px;margin-bottom:12px;}
+  .result-score{font-size:48px;font-weight:700;font-family:'Inter',sans-serif;color:var(--pink);}
+  .result-label{font-size:14px;color:var(--gray);margin-top:4px;}
+  .result-stats{display:flex;justify-content:center;gap:32px;margin-top:20px;padding-top:20px;border-top:1px solid #F3F4F6;}
+  .stat{text-align:center;}
+  .stat-num{font-size:22px;font-weight:700;font-family:'Inter',sans-serif;}
+  .stat-num.g{color:var(--green);}
+  .stat-num.r{color:var(--red);}
+  .stat-label{font-size:11px;color:var(--gray);margin-top:2px;}
+  .weak-section{margin-bottom:16px;}
+  .weak-title{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--red);}
+  .weak-list{background:var(--white);border-radius:14px;padding:4px 0;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+  .weak-item{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #F3F4F6;gap:10px;}
+  .weak-item:last-child{border-bottom:none;}
+  .weak-en{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;}
+  .weak-jp{font-size:12px;color:var(--gray);}
+  .weak-miss{font-size:11px;color:var(--red);background:var(--red-light);padding:2px 8px;border-radius:10px;white-space:nowrap;}
+  .result-btns{display:flex;gap:10px;}
+  .btn-retry{flex:1;padding:14px;border:2px solid var(--pink);background:var(--white);color:var(--pink);border-radius:14px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+  .btn-home{flex:1;padding:14px;border:none;background:var(--pink);color:var(--white);border-radius:14px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+
+  .empty-state{text-align:center;padding:40px 20px;color:var(--gray);}
+  .empty-state .emoji{font-size:40px;margin-bottom:10px;}
+  .loading-state{text-align:center;padding:60px 20px;color:var(--gray);}
+  .spinner{width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:var(--pink);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-badge">重要問題</span>
+  <h1>チェック！</h1>
+  <span class="header-status" id="header-status"></span>
+</div>
+
+<!-- ════════════ LOADING ════════════ -->
+<div class="screen active" id="screen-loading">
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p id="loading-text">問題データを読み込み中...</p>
+  </div>
+</div>
+
+<!-- ════════════ HOME ════════════ -->
+<div class="screen" id="screen-home">
+  <p class="top-title">今日は何を学習する？</p>
+  <p class="top-subtitle">タップして選んでください</p>
+
+  <p class="section-label">クイック学習</p>
+  <div class="quick-grid">
+    <div class="quick-card" onclick="startQuickMode('today')">
+      <div class="quick-icon">📅</div>
+      <div class="quick-name">今日の復習</div>
+      <div class="quick-count" id="qc-today">-</div>
+    </div>
+    <div class="quick-card" onclick="startQuickMode('random')">
+      <div class="quick-icon">🎲</div>
+      <div class="quick-name">ランダム</div>
+      <div class="quick-count" id="qc-random">-</div>
+    </div>
+    <div class="quick-card" onclick="startQuickMode('weak')">
+      <div class="quick-icon">⚠️</div>
+      <div class="quick-name">苦手問題</div>
+      <div class="quick-count hot" id="qc-weak">-</div>
+    </div>
+    <div class="quick-card" onclick="startQuickMode('all')">
+      <div class="quick-icon">📚</div>
+      <div class="quick-name">全問題</div>
+      <div class="quick-count" id="qc-all">-</div>
+    </div>
+  </div>
+
+  <p class="section-label">教科一覧</p>
+  <div class="subject-grid" id="subject-grid"></div>
+
+  <button class="btn-text" style="display:block;margin:14px auto 0" onclick="showAllUnits()">📋 単元一覧をすべて見る →</button>
+
+  <button class="update-btn" id="update-btn" onclick="updateData()">🔄 問題データ更新</button>
+  <div class="update-status" id="update-status"></div>
+  <div class="last-updated" id="last-updated"></div>
+</div>
+
+<!-- ════════════ UNIT SELECT (generic) ════════════ -->
+<div class="screen" id="screen-unitselect">
+  <div class="sub-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="sub-title" id="unitselect-title">単元を選ぶ</div>
+  </div>
+  <p class="select-sub">複数選択できます</p>
+  <div class="select-all-row">
+    <button class="btn-text" onclick="usSelectAll()">すべて選択</button>
+    <button class="btn-text" onclick="usSelectNone()">選択解除</button>
+    <button class="btn-text" onclick="usSelectWeak()" style="margin-left:auto">苦手のみ</button>
+  </div>
+  <div class="unit-grid" id="unitselect-grid"></div>
+
+  <div class="mode-section">
+    <p class="mode-label">モード</p>
+    <div class="mode-row">
+      <div class="mode-btn selected" data-mode="qa" onclick="selectStudyMode('qa')">
+        <div class="mode-icon">✍️</div>
+        <div class="mode-name">問題→答え</div>
+        <div class="mode-desc">自分で書いて○×判定</div>
+      </div>
+      <div class="mode-btn" data-mode="choice" onclick="selectStudyMode('choice')">
+        <div class="mode-icon">🔘</div>
+        <div class="mode-name">答え→問題</div>
+        <div class="mode-desc">4択から選ぶ</div>
+      </div>
+    </div>
+  </div>
+  <div class="mode-section">
+    <p class="mode-label">出題数</p>
+    <div class="mode-row">
+      <div class="mode-btn selected" data-count="all" onclick="selectCountMode('all')">
+        <div class="mode-icon">📚</div><div class="mode-name">全問</div><div class="mode-desc">選択した全問</div>
+      </div>
+      <div class="mode-btn" data-count="15" onclick="selectCountMode('15')">
+        <div class="mode-icon">⚡</div><div class="mode-name">15問</div><div class="mode-desc">苦手優先で15問</div>
+      </div>
+    </div>
+  </div>
+  <button class="start-btn" id="us-start-btn" onclick="startSelectedQuiz()" disabled>スタート</button>
+</div>
+
+<!-- ════════════ STUDY: 問題→答え (self-check) ════════════ -->
+<div class="screen" id="screen-study-qa">
+  <div class="quiz-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="progress-wrap">
+      <div class="progress-text"><span id="qa-prog-text">1 / 10</span><span id="qa-unit-text"></span></div>
+      <div class="progress-bar"><div class="progress-fill" id="qa-prog-fill" style="width:0%"></div></div>
+    </div>
+    <div class="streak-badge" id="qa-streak">🔥 0</div>
+  </div>
+  <span class="sr-badge new" id="qa-sr-badge">NEW</span>
+  <div class="card">
+    <div class="card-label">問題</div>
+    <div class="card-jp" id="qa-question"></div>
+    <span class="card-unit-tag" id="qa-unit-tag"></span>
+  </div>
+  <div id="qa-reveal-area">
+    <button class="reveal-btn" onclick="revealQA()">答えを見る 👁</button>
+  </div>
+  <div id="qa-answer-area" class="hidden">
+    <div class="answer-reveal">
+      <div class="card-label">答え</div>
+      <div class="answer-word" id="qa-answer"></div>
+      <div class="answer-memo hidden" id="qa-memo"></div>
+    </div>
+    <div class="self-check-row">
+      <button class="check-btn correct" onclick="answerQA(true)">⭕ 正解</button>
+      <button class="check-btn wrong" onclick="answerQA(false)">❌ 不正解</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ STUDY: 答え→問題 (4-choice) ════════════ -->
+<div class="screen" id="screen-study-choice">
+  <div class="quiz-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="progress-wrap">
+      <div class="progress-text"><span id="ch-prog-text">1 / 10</span><span id="ch-unit-text"></span></div>
+      <div class="progress-bar"><div class="progress-fill" id="ch-prog-fill" style="width:0%"></div></div>
+    </div>
+    <div class="streak-badge" id="ch-streak">🔥 0</div>
+  </div>
+  <span class="sr-badge new" id="ch-sr-badge">NEW</span>
+  <div class="card">
+    <div class="card-label">これは？</div>
+    <div class="card-en" id="ch-question"></div>
+    <span class="card-unit-tag" id="ch-unit-tag"></span>
+  </div>
+  <div class="choices-grid" id="ch-choices-grid"></div>
+  <div id="ch-phonics-area"></div>
+  <button class="next-btn" id="ch-next-btn" onclick="nextChoice()">次へ →</button>
+</div>
+<div class="feedback-overlay" id="feedback-overlay"><div class="feedback-mark" id="feedback-mark"></div></div>
+
+<!-- ════════════ RESULT ════════════ -->
+<div class="screen" id="screen-result">
+  <div class="result-card">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <div class="result-score" id="result-score">0%</div>
+    <div class="result-label">正解率</div>
+    <div class="result-stats">
+      <div class="stat"><div class="stat-num g" id="r-correct">0</div><div class="stat-label">正解</div></div>
+      <div class="stat"><div class="stat-num r" id="r-wrong">0</div><div class="stat-label">不正解</div></div>
+      <div class="stat"><div class="stat-num" id="r-streak">0</div><div class="stat-label">最大連続正解</div></div>
+    </div>
+  </div>
+  <div class="weak-section" id="weak-section"></div>
+  <div class="result-btns">
+    <button class="btn-retry" id="retry-btn">苦手だけ再挑戦</button>
+    <button class="btn-home" onclick="goHome()">ホームへ</button>
+  </div>
+</div>
+
+<script>
+const PHONICS_DB = {
+"nice": {
+"ipa": "/naɪs/",
+"phonics": [
+{
+"chunk": "ni",
+"sound": "ナイ"
+},
+{
+"chunk": "ce",
+"sound": "ス（サイレントe）"
+}
+],
+"tip": "nice の ce は「ス」と読む。cake、face なども同じパターン。"
+},
+"to": {
+"ipa": "/tuː/",
+"phonics": [
+{
+"chunk": "to",
+"sound": "トゥー"
+}
+],
+"tip": "to は「トゥー」と長く読む。too や two も同じ発音。"
+},
+"meet": {
+"ipa": "/miːt/",
+"phonics": [
+{
+"chunk": "ee",
+"sound": "イー"
+}
+],
+"tip": "ee は「イー」と長く読む。see、tree なども同じ。"
+},
+"good": {
+"ipa": "/ɡʊd/",
+"phonics": [
+{
+"chunk": "oo",
+"sound": "ウ（短め）"
+}
+],
+"tip": "oo は通常「ウー」だが good や book では短い「ウ」になる。"
+},
+"morning": {
+"ipa": "/ˈmɔːrnɪŋ/",
+"phonics": [
+{
+"chunk": "or",
+"sound": "オー"
+},
+{
+"chunk": "ing",
+"sound": "イング"
+}
+],
+"tip": "or は「オー」と読む。born、corn も同じ。"
+},
+"hi": {
+"ipa": "/haɪ/",
+"phonics": [
+{
+"chunk": "hi",
+"sound": "ハイ"
+}
+],
+"tip": "hi の i は「アイ」と読む。my、sky も同じパターン。"
+},
+"name": {
+"ipa": "/neɪm/",
+"phonics": [
+{
+"chunk": "a_e",
+"sound": "エイ"
+},
+{
+"chunk": "e",
+"sound": "発音しない"
+}
+],
+"tip": "a_e（マジックe）は「エイ」。cake、late なども同じ。"
+},
+"hello": {
+"ipa": "/həˈloʊ/",
+"phonics": [
+{
+"chunk": "e",
+"sound": "ェ"
+},
+{
+"chunk": "o",
+"sound": "オウ"
+}
+],
+"tip": "hello の ll は「ル」。語末の o は「オウ」と伸ばす。"
+},
+"like": {
+"ipa": "/laɪk/",
+"phonics": [
+{
+"chunk": "i_e",
+"sound": "アイ"
+},
+{
+"chunk": "e",
+"sound": "発音しない"
+}
+],
+"tip": "i_e（マジックe）は「アイ」。bike、kite なども同じ。"
+},
+"tennis": {
+"ipa": "/ˈtenɪs/",
+"phonics": [
+{
+"chunk": "e",
+"sound": "エ"
+},
+{
+"chunk": "nn",
+"sound": "ン"
+}
+],
+"tip": "tennis のように子音が重なっても発音は1回。button も同じ。"
+},
+"yes": {
+"ipa": "/jes/",
+"phonics": [
+{
+"chunk": "y",
+"sound": "ヤ行"
+},
+{
+"chunk": "es",
+"sound": "エス"
+}
+],
+"tip": "語頭の y は「ヤ行」の子音。year、yellow も同じ。"
+},
+"red": {
+"ipa": "/red/",
+"phonics": [
+{
+"chunk": "e",
+"sound": "エ"
+},
+{
+"chunk": "d",
+"sound": "ド"
+}
+],
+"tip": "ed は「エド」。bed、led なども同じ短母音。"
+},
+"play": {
+"ipa": "/pleɪ/",
+"phonics": [
+{
+"chunk": "pl",
+"sound": "プル"
+},
+{
+"chunk": "ay",
+"sound": "エイ"
+}
+],
+"tip": "ay は「エイ」。day、say、way も同じパターン。"
+},
+"soccer": {
+"ipa": "/ˈsɑːkər/",
+"phonics": [
+{
+"chunk": "cc",
+"sound": "ク"
+},
+{
+"chunk": "er",
+"sound": "アー"
+}
+],
+"tip": "語末の er は「アー」。teacher、water も同じ。"
+},
+"have": {
+"ipa": "/hæv/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ア（短）"
+},
+{
+"chunk": "ve",
+"sound": "ヴ"
+}
+],
+"tip": "have の a は短い「ア」。hat、cat と同じ短母音。"
+},
+"want": {
+"ipa": "/wɑːnt/",
+"phonics": [
+{
+"chunk": "wa",
+"sound": "ウォ"
+},
+{
+"chunk": "nt",
+"sound": "ント"
+}
+],
+"tip": "wa は「ウォ」。wash、watch も同じ発音になる。"
+},
+"call": {
+"ipa": "/kɔːl/",
+"phonics": [
+{
+"chunk": "all",
+"sound": "オール"
+}
+],
+"tip": "all は「オール」。ball、fall、tall なども同じ。"
+},
+"love": {
+"ipa": "/lʌv/",
+"phonics": [
+{
+"chunk": "o",
+"sound": "ア"
+},
+{
+"chunk": "ve",
+"sound": "ヴ"
+}
+],
+"tip": "love の o は「ア」と読む例外。come、some も同じ。"
+},
+"from": {
+"ipa": "/frɑːm/",
+"phonics": [
+{
+"chunk": "fr",
+"sound": "フル"
+},
+{
+"chunk": "om",
+"sound": "アム"
+}
+],
+"tip": "fr の組み合わせは「フル」。free、fruit も同じ。"
+},
+"and": {
+"ipa": "/ænd/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ア（短）"
+},
+{
+"chunk": "nd",
+"sound": "ンド"
+}
+],
+"tip": "and の a は短い「ア」。hand、land も同じ。"
+},
+"join": {
+"ipa": "/dʒɔɪn/",
+"phonics": [
+{
+"chunk": "j",
+"sound": "ジュ"
+},
+{
+"chunk": "oi",
+"sound": "オイ"
+}
+],
+"tip": "oi は「オイ」。oil、coin も同じパターン。"
+},
+"club": {
+"ipa": "/klʌb/",
+"phonics": [
+{
+"chunk": "cl",
+"sound": "クル"
+},
+{
+"chunk": "u",
+"sound": "ア"
+}
+],
+"tip": "cl の組み合わせは「クル」。class、clean も同じ。"
+},
+"fan": {
+"ipa": "/fæn/",
+"phonics": [
+{
+"chunk": "f",
+"sound": "フ"
+},
+{
+"chunk": "an",
+"sound": "アン"
+}
+],
+"tip": "an は「アン」。man、can、ran も同じ短母音。"
+},
+"often": {
+"ipa": "/ˈɔːfən/",
+"phonics": [
+{
+"chunk": "of",
+"sound": "オフ"
+},
+{
+"chunk": "en",
+"sound": "ェン"
+},
+{
+"chunk": "t",
+"sound": "発音しない"
+}
+],
+"tip": "often の t は発音しないことが多い。listen の t も同様。"
+},
+"with": {
+"ipa": "/wɪð/",
+"phonics": [
+{
+"chunk": "wi",
+"sound": "ウィ"
+},
+{
+"chunk": "th",
+"sound": "ズ（有声）"
+}
+],
+"tip": "th は「ス/ズ」。this、that の th は有声（ズ）。"
+},
+"but": {
+"ipa": "/bʌt/",
+"phonics": [
+{
+"chunk": "u",
+"sound": "ア"
+},
+{
+"chunk": "t",
+"sound": "ト"
+}
+],
+"tip": "but の u は「ア」。cut、nut も同じ短母音。"
+},
+"rugby": {
+"ipa": "/ˈrʌɡbi/",
+"phonics": [
+{
+"chunk": "u",
+"sound": "ア"
+},
+{
+"chunk": "g",
+"sound": "グ"
+}
+],
+"tip": "rugby の u は「ア」。bug、rug も同じ。"
+},
+"watch": {
+"ipa": "/wɑːtʃ/",
+"phonics": [
+{
+"chunk": "wa",
+"sound": "ウォ"
+},
+{
+"chunk": "tch",
+"sound": "チ"
+}
+],
+"tip": "tch は「チ」。match、catch、kitchen も同じ。"
+},
+"friend": {
+"ipa": "/frend/",
+"phonics": [
+{
+"chunk": "fr",
+"sound": "フル"
+},
+{
+"chunk": "ie",
+"sound": "エ"
+},
+{
+"chunk": "nd",
+"sound": "ンド"
+}
+],
+"tip": "friend の ie は「エ」と読む例外。通常 ie は「アイ」だが注意。"
+},
+"great": {
+"ipa": "/ɡreɪt/",
+"phonics": [
+{
+"chunk": "gr",
+"sound": "グル"
+},
+{
+"chunk": "ea",
+"sound": "エイ"
+},
+{
+"chunk": "t",
+"sound": "ト"
+}
+],
+"tip": "great の ea は「エイ」。steak も同じ。通常 ea は「イー」なので注意。"
+},
+"draw": {
+"ipa": "/drɔː/",
+"phonics": [
+{
+"chunk": "dr",
+"sound": "ドル"
+},
+{
+"chunk": "aw",
+"sound": "オー"
+}
+],
+"tip": "aw は「オー」。law、saw、jaw も同じパターン。"
+},
+"anime": {
+"ipa": "/ˈænɪmeɪ/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ア"
+},
+{
+"chunk": "ni",
+"sound": "ニ"
+},
+{
+"chunk": "me",
+"sound": "メ"
+}
+],
+"tip": "anime は日本語から来た言葉。英語では「アニメイ」と発音する。"
+},
+"lesson": {
+"ipa": "/ˈlesən/",
+"phonics": [
+{
+"chunk": "le",
+"sound": "レ"
+},
+{
+"chunk": "ss",
+"sound": "ス"
+},
+{
+"chunk": "on",
+"sound": "ォン"
+}
+],
+"tip": "ss は「ス」と1回だけ発音。class、miss も同じ。"
+},
+"comic": {
+"ipa": "/ˈkɑːmɪk/",
+"phonics": [
+{
+"chunk": "co",
+"sound": "コ"
+},
+{
+"chunk": "mic",
+"sound": "ミク"
+}
+],
+"tip": "comic の o は短い「コ」。stop、hot も同じ短母音。"
+},
+"art": {
+"ipa": "/ɑːrt/",
+"phonics": [
+{
+"chunk": "ar",
+"sound": "アー"
+}
+],
+"tip": "ar は「アー」。car、star、park も同じパターン。"
+},
+"school": {
+"ipa": "/skuːl/",
+"phonics": [
+{
+"chunk": "sch",
+"sound": "スク"
+},
+{
+"chunk": "oo",
+"sound": "ウー"
+}
+],
+"tip": "sch は「スク」。oo は「ウー」。cool、pool も同じ。"
+},
+"swimming": {
+"ipa": "/ˈswɪmɪŋ/",
+"phonics": [
+{
+"chunk": "sw",
+"sound": "スウ"
+},
+{
+"chunk": "imm",
+"sound": "イム"
+},
+{
+"chunk": "ing",
+"sound": "イング"
+}
+],
+"tip": "ing は「イング」。running、jumping も同じ語尾。"
+},
+"class": {
+"ipa": "/klæs/",
+"phonics": [
+{
+"chunk": "cl",
+"sound": "クル"
+},
+{
+"chunk": "a",
+"sound": "ア（短）"
+},
+{
+"chunk": "ss",
+"sound": "ス"
+}
+],
+"tip": "cl は「クル」。class の a は短い「ア」。"
+},
+"teacher": {
+"ipa": "/ˈtiːtʃər/",
+"phonics": [
+{
+"chunk": "ea",
+"sound": "イー"
+},
+{
+"chunk": "ch",
+"sound": "チ"
+},
+{
+"chunk": "er",
+"sound": "アー"
+}
+],
+"tip": "ea は「イー」。sea、eat などでも同じ。er は「アー」と弱く読む。"
+},
+"team": {
+"ipa": "/tiːm/",
+"phonics": [
+{
+"chunk": "ea",
+"sound": "イー"
+}
+],
+"tip": "ea は「イー」と読むことが多い。dream、stream も同じ。"
+},
+"cool": {
+"ipa": "/kuːl/",
+"phonics": [
+{
+"chunk": "oo",
+"sound": "ウー"
+}
+],
+"tip": "oo は「ウー」。moon、food、soon も同じ。"
+},
+"some": {
+"ipa": "/sʌm/",
+"phonics": [
+{
+"chunk": "o",
+"sound": "ア"
+},
+{
+"chunk": "me",
+"sound": "ム"
+}
+],
+"tip": "some の o は「ア」。come、home と混同注意（home は「オウ」）。"
+},
+"food": {
+"ipa": "/fuːd/",
+"phonics": [
+{
+"chunk": "oo",
+"sound": "ウー"
+}
+],
+"tip": "oo は「ウー」。moon、pool、too も同じ長母音。"
+},
+"father": {
+"ipa": "/ˈfɑːðər/",
+"phonics": [
+{
+"chunk": "fa",
+"sound": "ファ"
+},
+{
+"chunk": "th",
+"sound": "ズ（有声）"
+},
+{
+"chunk": "er",
+"sound": "アー"
+}
+],
+"tip": "father の th は有声（ズ）。the、this も同じ有声 th。"
+},
+"make": {
+"ipa": "/meɪk/",
+"phonics": [
+{
+"chunk": "a_e",
+"sound": "エイ"
+},
+{
+"chunk": "e",
+"sound": "発音しない"
+}
+],
+"tip": "a_e（マジックe）は「エイ」。cake、lake も同じ。"
+},
+"very": {
+"ipa": "/ˈveri/",
+"phonics": [
+{
+"chunk": "v",
+"sound": "ヴ"
+},
+{
+"chunk": "ery",
+"sound": "エリ"
+}
+],
+"tip": "v は日本語にない音。上の歯を下唇に当てて「ヴ」と発音する。"
+},
+"read": {
+"ipa": "/riːd/",
+"phonics": [
+{
+"chunk": "ea",
+"sound": "イー"
+}
+],
+"tip": "read（現在形）は「リード」。過去形も read だが「レッド」と発音が変わる。"
+},
+"really": {
+"ipa": "/ˈriːəli/",
+"phonics": [
+{
+"chunk": "ea",
+"sound": "イー"
+},
+{
+"chunk": "ll",
+"sound": "ル"
+},
+{
+"chunk": "y",
+"sound": "イ"
+}
+],
+"tip": "語末の y は「イ」と読む。happy、funny、easy も同じ。"
+},
+"see": {
+"ipa": "/siː/",
+"phonics": [
+{
+"chunk": "ee",
+"sound": "イー"
+}
+],
+"tip": "ee は「イー」。tree、free、bee も同じパターン。"
+},
+"excuse": {
+"ipa": "/ɪkˈskjuːz/",
+"phonics": [
+{
+"chunk": "ex",
+"sound": "エクス"
+},
+{
+"chunk": "cu",
+"sound": "キュ"
+},
+{
+"chunk": "se",
+"sound": "ズ"
+}
+],
+"tip": "excuse の se は「ズ」。動詞は「エクスキューズ」、名詞は「エクスキュース」と発音が異なる。"
+},
+"welcome": {
+"ipa": "/ˈwelkəm/",
+"phonics": [
+{
+"chunk": "wel",
+"sound": "ウェル"
+},
+{
+"chunk": "come",
+"sound": "カム"
+}
+],
+"tip": "welcome の o は「ア」。come も「カム」と発音する例外。"
+},
+"thank": {
+"ipa": "/θæŋk/",
+"phonics": [
+{
+"chunk": "th",
+"sound": "ス（無声）"
+},
+{
+"chunk": "ank",
+"sound": "アンク"
+}
+],
+"tip": "th は「ス/ズ」の2種類。thank の th は息だけで「ス」（無声）。"
+},
+"bird": {
+"ipa": "/bɜːrd/",
+"phonics": [
+{
+"chunk": "ir",
+"sound": "アー"
+}
+],
+"tip": "ir は「アー」。girl、shirt、first も同じ。er・ur・ir はどれも「アー」になる。"
+},
+"interesting": {
+"ipa": "/ˈɪntrəstɪŋ/",
+"phonics": [
+{
+"chunk": "in",
+"sound": "イン"
+},
+{
+"chunk": "ter",
+"sound": "トレ"
+},
+{
+"chunk": "ing",
+"sound": "イング"
+}
+],
+"tip": "interesting は4音節。「イン・トレ・ス・ティング」とリズムよく読もう。"
+},
+"favorite": {
+"ipa": "/ˈfeɪvərɪt/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "エイ"
+},
+{
+"chunk": "or",
+"sound": "オ（弱）"
+},
+{
+"chunk": "ite",
+"sound": "イット"
+}
+],
+"tip": "favorite の a は「エイ」。fate、late と同じマジックe のパターン。"
+},
+"character": {
+"ipa": "/ˈkærɪktər/",
+"phonics": [
+{
+"chunk": "ch",
+"sound": "ク"
+},
+{
+"chunk": "ar",
+"sound": "ア"
+},
+{
+"chunk": "er",
+"sound": "アー"
+}
+],
+"tip": "character の ch は「チ」ではなく「ク」。school、chemistry も同じ。"
+},
+"family": {
+"ipa": "/ˈfæməli/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ア（短）"
+},
+{
+"chunk": "ily",
+"sound": "イリ"
+}
+],
+"tip": "family の a は短い「ア」。語末 ly は「リ」。quickly、easily も同じ。"
+},
+"brave": {
+"ipa": "/breɪv/",
+"phonics": [
+{
+"chunk": "br",
+"sound": "ブル"
+},
+{
+"chunk": "a_e",
+"sound": "エイ"
+}
+],
+"tip": "br は「ブル」。break、bridge も同じ。a_e は「エイ」。"
+},
+"kind": {
+"ipa": "/kaɪnd/",
+"phonics": [
+{
+"chunk": "i",
+"sound": "アイ"
+},
+{
+"chunk": "nd",
+"sound": "ンド"
+}
+],
+"tip": "kind の i は「アイ」。find、mind も同じ。i の後に nd が来ると「アイ」になりやすい。"
+},
+"around": {
+"ipa": "/əˈraʊnd/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ァ（弱）"
+},
+{
+"chunk": "ou",
+"sound": "アウ"
+},
+{
+"chunk": "nd",
+"sound": "ンド"
+}
+],
+"tip": "ou は「アウ」。out、house、loud も同じパターン。"
+},
+"study": {
+"ipa": "/ˈstʌdi/",
+"phonics": [
+{
+"chunk": "st",
+"sound": "スト"
+},
+{
+"chunk": "u",
+"sound": "ア"
+},
+{
+"chunk": "dy",
+"sound": "ディ"
+}
+],
+"tip": "study の u は「ア」。sun、bus も同じ。"
+},
+"win": {
+"ipa": "/wɪn/",
+"phonics": [
+{
+"chunk": "wi",
+"sound": "ウィ"
+},
+{
+"chunk": "n",
+"sound": "ン"
+}
+],
+"tip": "win の i は短い「イ」。sit、hit、bit も同じ短母音。"
+},
+"luck": {
+"ipa": "/lʌk/",
+"phonics": [
+{
+"chunk": "u",
+"sound": "ア"
+},
+{
+"chunk": "ck",
+"sound": "ク"
+}
+],
+"tip": "ck は「ク」。back、duck、kick も同じ。u は「ア」と読む。"
+},
+"practice": {
+"ipa": "/ˈpræktɪs/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ア"
+},
+{
+"chunk": "ct",
+"sound": "クト"
+},
+{
+"chunk": "ice",
+"sound": "イス"
+}
+],
+"tip": "practice の ice は「イス」。ice、price も同じ。"
+},
+"station": {
+"ipa": "/ˈsteɪʃən/",
+"phonics": [
+{
+"chunk": "st",
+"sound": "スト"
+},
+{
+"chunk": "a",
+"sound": "エイ"
+},
+{
+"chunk": "tion",
+"sound": "ション"
+}
+],
+"tip": "tion は「ション」。vacation、nation、education も同じ。"
+},
+"animal": {
+"ipa": "/ˈænɪməl/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ア"
+},
+{
+"chunk": "ni",
+"sound": "ニ"
+},
+{
+"chunk": "mal",
+"sound": "ムァル"
+}
+],
+"tip": "animal は3音節。「ア・ニ・ムァル」とリズムよく読もう。"
+},
+"afternoon": {
+"ipa": "/ˌæftərˈnuːn/",
+"phonics": [
+{
+"chunk": "af",
+"sound": "アフ"
+},
+{
+"chunk": "ter",
+"sound": "ター"
+},
+{
+"chunk": "noon",
+"sound": "ヌーン"
+}
+],
+"tip": "noon は「ヌーン」。oo は「ウー」のパターン。moon も同じ。"
+},
+"basketball": {
+"ipa": "/ˈbæskɪtbɔːl/",
+"phonics": [
+{
+"chunk": "bas",
+"sound": "バス"
+},
+{
+"chunk": "ket",
+"sound": "キット"
+},
+{
+"chunk": "ball",
+"sound": "ボール"
+}
+],
+"tip": "ball の all は「オール」。tall、fall、wall も同じ。"
+},
+"nervous": {
+"ipa": "/ˈnɜːrvəs/",
+"phonics": [
+{
+"chunk": "er",
+"sound": "アー"
+},
+{
+"chunk": "vous",
+"sound": "ヴァス"
+}
+],
+"tip": "er は「アー」。nervous の er も同じ。her、term も同じ。"
+},
+"worry": {
+"ipa": "/ˈwʌri/",
+"phonics": [
+{
+"chunk": "wo",
+"sound": "ワ"
+},
+{
+"chunk": "rr",
+"sound": "ル"
+},
+{
+"chunk": "y",
+"sound": "イ"
+}
+],
+"tip": "worry の o は「ア」。word、work も w の後の o は「ア」になる。"
+},
+"sheep": {
+"ipa": "/ʃiːp/",
+"phonics": [
+{
+"chunk": "sh",
+"sound": "シュ"
+},
+{
+"chunk": "ee",
+"sound": "イー"
+}
+],
+"tip": "sh は「シュ」。ship、shop、shoe も同じ。ee は「イー」。"
+},
+"please": {
+"ipa": "/pliːz/",
+"phonics": [
+{
+"chunk": "pl",
+"sound": "プル"
+},
+{
+"chunk": "ea",
+"sound": "イー"
+},
+{
+"chunk": "se",
+"sound": "ズ"
+}
+],
+"tip": "pl は「プル」。play、plan も同じ。ea は「イー」。"
+},
+"poster": {
+"ipa": "/ˈpoʊstər/",
+"phonics": [
+{
+"chunk": "o",
+"sound": "オウ"
+},
+{
+"chunk": "st",
+"sound": "スト"
+},
+{
+"chunk": "er",
+"sound": "アー"
+}
+],
+"tip": "poster の o は「オウ」。most、host も同じ。er は「アー」。"
+},
+"movie": {
+"ipa": "/ˈmuːvi/",
+"phonics": [
+{
+"chunk": "ov",
+"sound": "ウーヴ"
+},
+{
+"chunk": "ie",
+"sound": "イー"
+}
+],
+"tip": "movie の ie は「イー」。語末 ie は「イー」になることが多い。"
+},
+"student": {
+"ipa": "/ˈstuːdənt/",
+"phonics": [
+{
+"chunk": "stu",
+"sound": "ストゥ"
+},
+{
+"chunk": "dent",
+"sound": "ドェント"
+}
+],
+"tip": "student の u は「ウー」。studio も同じ。"
+},
+"famous": {
+"ipa": "/ˈfeɪməs/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "エイ"
+},
+{
+"chunk": "mous",
+"sound": "マス"
+}
+],
+"tip": "famous の a は「エイ」。name、same も同じマジックe パターン。"
+},
+"subject": {
+"ipa": "/ˈsʌbdʒɪkt/",
+"phonics": [
+{
+"chunk": "sub",
+"sound": "サブ"
+},
+{
+"chunk": "ject",
+"sound": "ジェクト"
+}
+],
+"tip": "ject は「ジェクト」。project、object も同じ語尾。"
+},
+"beautiful": {
+"ipa": "/ˈbjuːtɪfəl/",
+"phonics": [
+{
+"chunk": "eau",
+"sound": "ユー"
+},
+{
+"chunk": "ti",
+"sound": "ティ"
+},
+{
+"chunk": "ful",
+"sound": "フル"
+}
+],
+"tip": "beau の eau は「ユー」と読む。フランス語由来の単語によく見られる。"
+},
+"brother": {
+"ipa": "/ˈbrʌðər/",
+"phonics": [
+{
+"chunk": "br",
+"sound": "ブル"
+},
+{
+"chunk": "o",
+"sound": "ア"
+},
+{
+"chunk": "th",
+"sound": "ズ（有声）"
+},
+{
+"chunk": "er",
+"sound": "アー"
+}
+],
+"tip": "brother の th は有声（ズ）。other、mother も同じ。"
+},
+"nature": {
+"ipa": "/ˈneɪtʃər/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "エイ"
+},
+{
+"chunk": "ture",
+"sound": "チャー"
+}
+],
+"tip": "ture は「チャー」。picture、future、adventure も同じ語尾。"
+},
+"weekend": {
+"ipa": "/ˈwiːkend/",
+"phonics": [
+{
+"chunk": "ee",
+"sound": "イー"
+},
+{
+"chunk": "end",
+"sound": "エンド"
+}
+],
+"tip": "week の ee は「イー」。see、tree も同じ。end は「エンド」。"
+},
+"dolphin": {
+"ipa": "/ˈdɑːlfɪn/",
+"phonics": [
+{
+"chunk": "ph",
+"sound": "フ"
+},
+{
+"chunk": "in",
+"sound": "イン"
+}
+],
+"tip": "ph は「フ」。phone、photo も同じ。f の代わりに ph を使う単語はギリシャ語由来が多い。"
+},
+"website": {
+"ipa": "/ˈwebsaɪt/",
+"phonics": [
+{
+"chunk": "web",
+"sound": "ウェブ"
+},
+{
+"chunk": "si",
+"sound": "サイ"
+},
+{
+"chunk": "te",
+"sound": "ト"
+}
+],
+"tip": "website の i は「アイ」。site、kite も同じ i_e パターン。"
+},
+"restaurant": {
+"ipa": "/ˈrestrɑːnt/",
+"phonics": [
+{
+"chunk": "res",
+"sound": "レス"
+},
+{
+"chunk": "tau",
+"sound": "トー"
+},
+{
+"chunk": "rant",
+"sound": "ラント"
+}
+],
+"tip": "restaurant はフランス語由来。「レストラント」と発音する。"
+},
+"friendly": {
+"ipa": "/ˈfrendli/",
+"phonics": [
+{
+"chunk": "fr",
+"sound": "フル"
+},
+{
+"chunk": "ie",
+"sound": "エ"
+},
+{
+"chunk": "nd",
+"sound": "ンド"
+},
+{
+"chunk": "ly",
+"sound": "リ"
+}
+],
+"tip": "語尾 ly は「リ」。quickly、slowly、kindly も同じ。"
+},
+"history": {
+"ipa": "/ˈhɪstəri/",
+"phonics": [
+{
+"chunk": "his",
+"sound": "ヒス"
+},
+{
+"chunk": "to",
+"sound": "トー"
+},
+{
+"chunk": "ry",
+"sound": "リ"
+}
+],
+"tip": "history は3音節。「ヒス・ト・リ」と読む。story も似たパターン。"
+},
+"different": {
+"ipa": "/ˈdɪfrənt/",
+"phonics": [
+{
+"chunk": "dif",
+"sound": "ディフ"
+},
+{
+"chunk": "fer",
+"sound": "ファー"
+},
+{
+"chunk": "ent",
+"sound": "ェント"
+}
+],
+"tip": "ent は「ェント」。student、moment も同じ語尾。"
+},
+"ticket": {
+"ipa": "/ˈtɪkɪt/",
+"phonics": [
+{
+"chunk": "ck",
+"sound": "ク"
+},
+{
+"chunk": "et",
+"sound": "イット"
+}
+],
+"tip": "ck は「ク」。pocket、rocket も同じ。"
+},
+"clothes": {
+"ipa": "/kloʊðz/",
+"phonics": [
+{
+"chunk": "cl",
+"sound": "クル"
+},
+{
+"chunk": "o",
+"sound": "オウ"
+},
+{
+"chunk": "th",
+"sound": "ズ（有声）"
+}
+],
+"tip": "clothes の th は有声（ズ）。語末の es も「ズ」。"
+},
+"tomorrow": {
+"ipa": "/təˈmɑːroʊ/",
+"phonics": [
+{
+"chunk": "to",
+"sound": "トゥ"
+},
+{
+"chunk": "mor",
+"sound": "モー"
+},
+{
+"chunk": "row",
+"sound": "ロウ"
+}
+],
+"tip": "tomorrow の row は「ロウ」。row（列）も同じ。"
+},
+"market": {
+"ipa": "/ˈmɑːrkɪt/",
+"phonics": [
+{
+"chunk": "ar",
+"sound": "アー"
+},
+{
+"chunk": "ket",
+"sound": "キット"
+}
+],
+"tip": "ar は「アー」。car、start、park も同じ。"
+},
+"souvenir": {
+"ipa": "/ˌsuːvəˈnɪr/",
+"phonics": [
+{
+"chunk": "ou",
+"sound": "ウー"
+},
+{
+"chunk": "ve",
+"sound": "ヴ"
+},
+{
+"chunk": "nir",
+"sound": "ニア"
+}
+],
+"tip": "souvenir はフランス語由来。ou は「ウー」。"
+},
+"travel": {
+"ipa": "/ˈtrævəl/",
+"phonics": [
+{
+"chunk": "tr",
+"sound": "トル"
+},
+{
+"chunk": "a",
+"sound": "ア"
+},
+{
+"chunk": "vel",
+"sound": "ヴェル"
+}
+],
+"tip": "tr は「トル」。tree、trip も同じ。a は短い「ア」。"
+},
+"palace": {
+"ipa": "/ˈpælɪs/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ア（短）"
+},
+{
+"chunk": "lace",
+"sound": "リス"
+}
+],
+"tip": "palace の a は短い「ア」。necklace、surface も似た語尾。"
+},
+"exciting": {
+"ipa": "/ɪkˈsaɪtɪŋ/",
+"phonics": [
+{
+"chunk": "ex",
+"sound": "エクス"
+},
+{
+"chunk": "ci",
+"sound": "サイ"
+},
+{
+"chunk": "ting",
+"sound": "ティング"
+}
+],
+"tip": "exciting の ci は「サイ」。i_e のマジックe パターン（excite → exciting）。"
+},
+"museum": {
+"ipa": "/mjuːˈziːəm/",
+"phonics": [
+{
+"chunk": "mu",
+"sound": "ミュ"
+},
+{
+"chunk": "se",
+"sound": "ズィ"
+},
+{
+"chunk": "um",
+"sound": "アム"
+}
+],
+"tip": "museum の se は「ズィ」。"
+},
+"volunteer": {
+"ipa": "/ˌvɑːlənˈtɪr/",
+"phonics": [
+{
+"chunk": "vol",
+"sound": "ヴォル"
+},
+{
+"chunk": "un",
+"sound": "アン"
+},
+{
+"chunk": "teer",
+"sound": "ティア"
+}
+],
+"tip": "teer は「ティア」。career、pioneer も似たパターン。"
+},
+"respect": {
+"ipa": "/rɪˈspekt/",
+"phonics": [
+{
+"chunk": "re",
+"sound": "リ"
+},
+{
+"chunk": "spect",
+"sound": "スペクト"
+}
+],
+"tip": "spect は「見る」という意味のラテン語。inspect、expect も同じ語根。"
+},
+"country": {
+"ipa": "/ˈkʌntri/",
+"phonics": [
+{
+"chunk": "cou",
+"sound": "カ"
+},
+{
+"chunk": "ntry",
+"sound": "ントリ"
+}
+],
+"tip": "country の ou は「ア」。touch、young も同じ珍しいパターン。"
+},
+"African": {
+"ipa": "/ˈæfrɪkən/",
+"phonics": [
+{
+"chunk": "Af",
+"sound": "アフ"
+},
+{
+"chunk": "ri",
+"sound": "リ"
+},
+{
+"chunk": "can",
+"sound": "カン"
+}
+],
+"tip": "African は3音節。「ア・フリ・カン」とリズムよく読もう。"
+},
+"reduce": {
+"ipa": "/rɪˈdjuːs/",
+"phonics": [
+{
+"chunk": "re",
+"sound": "リ"
+},
+{
+"chunk": "duce",
+"sound": "デュース"
+}
+],
+"tip": "uce は「ユース」。produce、introduce も同じ語尾。"
+},
+"plastic": {
+"ipa": "/ˈplæstɪk/",
+"phonics": [
+{
+"chunk": "pl",
+"sound": "プル"
+},
+{
+"chunk": "a",
+"sound": "ア（短）"
+},
+{
+"chunk": "stic",
+"sound": "スティック"
+}
+],
+"tip": "pl は「プル」。plastic の a は短い「ア」。"
+},
+"original": {
+"ipa": "/əˈrɪdʒɪnəl/",
+"phonics": [
+{
+"chunk": "or",
+"sound": "オ（弱）"
+},
+{
+"chunk": "ig",
+"sound": "イジ"
+},
+{
+"chunk": "inal",
+"sound": "イナル"
+}
+],
+"tip": "original は4音節。「オ・リジ・ナ・ル」と読む。"
+},
+"village": {
+"ipa": "/ˈvɪlɪdʒ/",
+"phonics": [
+{
+"chunk": "vil",
+"sound": "ヴィル"
+},
+{
+"chunk": "age",
+"sound": "イジ"
+}
+],
+"tip": "age は「イジ」。cabbage、message も同じ語尾。"
+},
+"mushroom": {
+"ipa": "/ˈmʌʃruːm/",
+"phonics": [
+{
+"chunk": "sh",
+"sound": "シュ"
+},
+{
+"chunk": "oo",
+"sound": "ウー"
+}
+],
+"tip": "sh は「シュ」。mushroom の oo は「ウー」。"
+},
+"concert": {
+"ipa": "/ˈkɑːnsərt/",
+"phonics": [
+{
+"chunk": "con",
+"sound": "コン"
+},
+{
+"chunk": "cert",
+"sound": "サート"
+}
+],
+"tip": "cert は「サート」。concert、certain も同じ。"
+},
+"performance": {
+"ipa": "/pərˈfɔːrməns/",
+"phonics": [
+{
+"chunk": "per",
+"sound": "パー"
+},
+{
+"chunk": "for",
+"sound": "フォー"
+},
+{
+"chunk": "mance",
+"sound": "マンス"
+}
+],
+"tip": "mance は「マンス」。romance、distance も似た語尾。"
+},
+"vacation": {
+"ipa": "/veɪˈkeɪʃən/",
+"phonics": [
+{
+"chunk": "va",
+"sound": "ヴェイ"
+},
+{
+"chunk": "ca",
+"sound": "ケイ"
+},
+{
+"chunk": "tion",
+"sound": "ション"
+}
+],
+"tip": "tion は「ション」。vacation、nation、education も同じ。"
+},
+"traditional": {
+"ipa": "/trəˈdɪʃənəl/",
+"phonics": [
+{
+"chunk": "tr",
+"sound": "トル"
+},
+{
+"chunk": "di",
+"sound": "ディ"
+},
+{
+"chunk": "tion",
+"sound": "ション"
+},
+{
+"chunk": "al",
+"sound": "アル"
+}
+],
+"tip": "tional は「ショナル」。national、emotional も同じ語尾。"
+},
+"grandparent": {
+"ipa": "/ˈɡrændperənt/",
+"phonics": [
+{
+"chunk": "gr",
+"sound": "グル"
+},
+{
+"chunk": "and",
+"sound": "アンド"
+},
+{
+"chunk": "par",
+"sound": "ペア"
+},
+{
+"chunk": "ent",
+"sound": "エント"
+}
+],
+"tip": "grand は「グランド」。grandmother、grandfather も同じ語根。"
+},
+"remember": {
+"ipa": "/rɪˈmembər/",
+"phonics": [
+{
+"chunk": "re",
+"sound": "リ"
+},
+{
+"chunk": "mem",
+"sound": "メム"
+},
+{
+"chunk": "ber",
+"sound": "バー"
+}
+],
+"tip": "re は「再び」という意味の接頭辞。remake、return も同じ。"
+},
+"mistake": {
+"ipa": "/mɪˈsteɪk/",
+"phonics": [
+{
+"chunk": "mis",
+"sound": "ミス"
+},
+{
+"chunk": "take",
+"sound": "テイク"
+}
+],
+"tip": "mis は「間違い」という意味の接頭辞。misuse、misread も同じ。"
+},
+"memory": {
+"ipa": "/ˈmeməri/",
+"phonics": [
+{
+"chunk": "mem",
+"sound": "メム"
+},
+{
+"chunk": "o",
+"sound": "ォ（弱）"
+},
+{
+"chunk": "ry",
+"sound": "リ"
+}
+],
+"tip": "memory は3音節。「メム・ォ・リ」とリズムよく読もう。"
+},
+"campfire": {
+"ipa": "/ˈkæmpfaɪər/",
+"phonics": [
+{
+"chunk": "camp",
+"sound": "キャンプ"
+},
+{
+"chunk": "fire",
+"sound": "ファイアー"
+}
+],
+"tip": "fire の i_e は「アイ」。tire、hire も同じ。"
+},
+"stomachache": {
+"ipa": "/ˈstʌməkeɪk/",
+"phonics": [
+{
+"chunk": "stom",
+"sound": "スタム"
+},
+{
+"chunk": "ach",
+"sound": "ァク"
+},
+{
+"chunk": "ache",
+"sound": "エイク"
+}
+],
+"tip": "ache は「エイク」。headache、toothache も同じ。"
+},
+"headache": {
+"ipa": "/ˈhedeɪk/",
+"phonics": [
+{
+"chunk": "head",
+"sound": "ヘッド"
+},
+{
+"chunk": "ache",
+"sound": "エイク"
+}
+],
+"tip": "head の ea は「エ」。bread、instead も同じ例外的な発音。"
+},
+"toothache": {
+"ipa": "/ˈtuːθeɪk/",
+"phonics": [
+{
+"chunk": "too",
+"sound": "トゥー"
+},
+{
+"chunk": "th",
+"sound": "ス（無声）"
+},
+{
+"chunk": "ache",
+"sound": "エイク"
+}
+],
+"tip": "tooth の oo は「ウー」。booth、smooth も同じ。"
+},
+"medicine": {
+"ipa": "/ˈmedɪsɪn/",
+"phonics": [
+{
+"chunk": "med",
+"sound": "メッ"
+},
+{
+"chunk": "i",
+"sound": "ィ"
+},
+{
+"chunk": "cine",
+"sound": "スィン"
+}
+],
+"tip": "cine は「スィン」。medicine は3音節。"
+},
+"naughty": {
+"ipa": "/ˈnɔːti/",
+"phonics": [
+{
+"chunk": "naugh",
+"sound": "ノー"
+},
+{
+"chunk": "ty",
+"sound": "ティ"
+}
+],
+"tip": "augh は「オー」。caught、daughter も同じ珍しいパターン。"
+},
+"escape": {
+"ipa": "/ɪˈskeɪp/",
+"phonics": [
+{
+"chunk": "es",
+"sound": "エス"
+},
+{
+"chunk": "cape",
+"sound": "ケイプ"
+}
+],
+"tip": "cape の a_e は「エイ」。tape、grape も同じマジックe パターン。"
+},
+"chestnut": {
+"ipa": "/ˈtʃesnʌt/",
+"phonics": [
+{
+"chunk": "ch",
+"sound": "チ"
+},
+{
+"chunk": "est",
+"sound": "エスト"
+},
+{
+"chunk": "nut",
+"sound": "ナット"
+}
+],
+"tip": "ch は「チ」。chest、chin も同じ。nut の u は「ア」。"
+},
+"neighbor": {
+"ipa": "/ˈneɪbər/",
+"phonics": [
+{
+"chunk": "eigh",
+"sound": "エイ"
+},
+{
+"chunk": "bor",
+"sound": "バー"
+}
+],
+"tip": "eigh は「エイ」と読む珍しいパターン。eight、weight も同じ。"
+},
+"receive": {
+"ipa": "/rɪˈsiːv/",
+"phonics": [
+{
+"chunk": "re",
+"sound": "リ"
+},
+{
+"chunk": "cei",
+"sound": "スィー"
+},
+{
+"chunk": "ve",
+"sound": "ヴ"
+}
+],
+"tip": "cei は「スィー」。ie/ei のルール：c の後は ei（receive、ceiling）。"
+},
+"through": {
+"ipa": "/θruː/",
+"phonics": [
+{
+"chunk": "th",
+"sound": "ス（無声）"
+},
+{
+"chunk": "ough",
+"sound": "ウー"
+}
+],
+"tip": "ough は「ウー」。though（オウ）、tough（アフ）など読み方が複数あるので注意。"
+},
+"ground": {
+"ipa": "/ɡraʊnd/",
+"phonics": [
+{
+"chunk": "gr",
+"sound": "グル"
+},
+{
+"chunk": "ou",
+"sound": "アウ"
+},
+{
+"chunk": "nd",
+"sound": "ンド"
+}
+],
+"tip": "ou は「アウ」。sound、found、round も同じ。"
+},
+"smoke": {
+"ipa": "/smoʊk/",
+"phonics": [
+{
+"chunk": "sm",
+"sound": "スム"
+},
+{
+"chunk": "o_e",
+"sound": "オウ"
+}
+],
+"tip": "o_e（マジックe）は「オウ」。home、hope、note も同じ。"
+},
+"rise": {
+"ipa": "/raɪz/",
+"phonics": [
+{
+"chunk": "i_e",
+"sound": "アイ"
+},
+{
+"chunk": "se",
+"sound": "ズ"
+}
+],
+"tip": "i_e（マジックe）は「アイ」。rise、wise、prize も同じ。"
+},
+"snowboarding": {
+"ipa": "/ˈsnoʊbɔːrdɪŋ/",
+"phonics": [
+{
+"chunk": "sn",
+"sound": "スン"
+},
+{
+"chunk": "ow",
+"sound": "オウ"
+},
+{
+"chunk": "ing",
+"sound": "イング"
+}
+],
+"tip": "ow は「オウ」か「アウ」の2通り。snow、blow は「オウ」。cow、now は「アウ」。"
+},
+"mountain": {
+"ipa": "/ˈmaʊntɪn/",
+"phonics": [
+{
+"chunk": "mou",
+"sound": "マウ"
+},
+{
+"chunk": "ntain",
+"sound": "ンテン"
+}
+],
+"tip": "ountain は「アウンテン」。fountain も同じ語尾。"
+},
+"wooden": {
+"ipa": "/ˈwʊdən/",
+"phonics": [
+{
+"chunk": "oo",
+"sound": "ウ（短め）"
+},
+{
+"chunk": "den",
+"sound": "ドゥン"
+}
+],
+"tip": "wood の oo は短い「ウ」。book、cook、look も同じ。"
+},
+"future": {
+"ipa": "/ˈfjuːtʃər/",
+"phonics": [
+{
+"chunk": "fu",
+"sound": "フュ"
+},
+{
+"chunk": "ture",
+"sound": "チャー"
+}
+],
+"tip": "ture は「チャー」。picture、adventure、nature も同じ。"
+},
+"hotel": {
+"ipa": "/hoʊˈtel/",
+"phonics": [
+{
+"chunk": "ho",
+"sound": "ホウ"
+},
+{
+"chunk": "tel",
+"sound": "テル"
+}
+],
+"tip": "hotel の o は「オウ」。home、hope も同じマジックe パターン（hotel は o の後に子音+e）。"
+},
+"campground": {
+"ipa": "/ˈkæmpɡraʊnd/",
+"phonics": [
+{
+"chunk": "camp",
+"sound": "キャンプ"
+},
+{
+"chunk": "gr",
+"sound": "グル"
+},
+{
+"chunk": "ound",
+"sound": "アウンド"
+}
+],
+"tip": "ound は「アウンド」。sound、round、found も同じ。"
+},
+"wrong": {
+"ipa": "/rɔːŋ/",
+"phonics": [
+{
+"chunk": "wr",
+"sound": "ル（w発音しない）"
+},
+{
+"chunk": "ong",
+"sound": "オング"
+}
+],
+"tip": "wr は「ル」。w を発音しない。write、wrap、wrist も同じ。"
+},
+"doctor": {
+"ipa": "/ˈdɑːktər/",
+"phonics": [
+{
+"chunk": "doc",
+"sound": "ドク"
+},
+{
+"chunk": "tor",
+"sound": "ター"
+}
+],
+"tip": "tor は「ター」。director、instructor も同じ語尾。"
+},
+"relay": {
+"ipa": "/ˈriːleɪ/",
+"phonics": [
+{
+"chunk": "re",
+"sound": "リ"
+},
+{
+"chunk": "lay",
+"sound": "レイ"
+}
+],
+"tip": "lay は「レイ」。play、say、day も同じ ay パターン。"
+},
+"runner": {
+"ipa": "/ˈrʌnər/",
+"phonics": [
+{
+"chunk": "u",
+"sound": "ア"
+},
+{
+"chunk": "nn",
+"sound": "ン"
+},
+{
+"chunk": "er",
+"sound": "アー"
+}
+],
+"tip": "runner の u は「ア」。run + ner で n が重なる（ダブルレター）。"
+},
+"trick": {
+"ipa": "/trɪk/",
+"phonics": [
+{
+"chunk": "tr",
+"sound": "トル"
+},
+{
+"chunk": "ick",
+"sound": "イック"
+}
+],
+"tip": "ick は「イック」。kick、pick、sick も同じ。"
+},
+"thought": {
+"ipa": "/θɔːt/",
+"phonics": [
+{
+"chunk": "th",
+"sound": "ス（無声）"
+},
+{
+"chunk": "ough",
+"sound": "オー"
+},
+{
+"chunk": "t",
+"sound": "ト"
+}
+],
+"tip": "ough は文脈で読み方が変わる。thought は「オー」。through は「ウー」。tough は「アフ」。"
+},
+"heard": {
+"ipa": "/hɜːrd/",
+"phonics": [
+{
+"chunk": "ear",
+"sound": "アー"
+}
+],
+"tip": "ear は通常「イア」だが heard では「アー」。learn、early も同じ例外的な発音。"
+},
+"hear": {
+"ipa": "/hɪr/",
+"phonics": [
+{
+"chunk": "ear",
+"sound": "イア"
+}
+],
+"tip": "ear は「イア」。year、near、clear も同じ。heard と混同注意（heard は「アー」）。"
+},
+"something": {
+"ipa": "/ˈsʌmθɪŋ/",
+"phonics": [
+{
+"chunk": "some",
+"sound": "サム"
+},
+{
+"chunk": "th",
+"sound": "ス（無声）"
+},
+{
+"chunk": "ing",
+"sound": "イング"
+}
+],
+"tip": "thing の th は無声「ス」。think、thank も同じ。"
+},
+"himself": {
+"ipa": "/hɪmˈself/",
+"phonics": [
+{
+"chunk": "him",
+"sound": "ヒム"
+},
+{
+"chunk": "self",
+"sound": "セルフ"
+}
+],
+"tip": "self は「セルフ」。herself、yourself、myself も同じ語尾。"
+},
+"someone": {
+"ipa": "/ˈsʌmwʌn/",
+"phonics": [
+{
+"chunk": "some",
+"sound": "サム"
+},
+{
+"chunk": "one",
+"sound": "ワン"
+}
+],
+"tip": "one は「ワン」。alone、phone の one とは発音が違う注意点。"
+},
+"fresh": {
+"ipa": "/freʃ/",
+"phonics": [
+{
+"chunk": "fr",
+"sound": "フル"
+},
+{
+"chunk": "e",
+"sound": "エ"
+},
+{
+"chunk": "sh",
+"sound": "シュ"
+}
+],
+"tip": "sh は「シュ」。fish、brush も同じ。fr は「フル」。"
+},
+"become": {
+"ipa": "/bɪˈkʌm/",
+"phonics": [
+{
+"chunk": "be",
+"sound": "ビ"
+},
+{
+"chunk": "come",
+"sound": "カム"
+}
+],
+"tip": "come の o は「ア」。welcome も同じ例外。"
+},
+"teach": {
+"ipa": "/tiːtʃ/",
+"phonics": [
+{
+"chunk": "ea",
+"sound": "イー"
+},
+{
+"chunk": "ch",
+"sound": "チ"
+}
+],
+"tip": "ea は「イー」。teach、beach、reach も同じ。ch は「チ」。"
+},
+"children": {
+"ipa": "/ˈtʃɪldrən/",
+"phonics": [
+{
+"chunk": "ch",
+"sound": "チ"
+},
+{
+"chunk": "ild",
+"sound": "イルド"
+},
+{
+"chunk": "ren",
+"sound": "レン"
+}
+],
+"tip": "ch は「チ」。child の i は「アイ」だが children では「イ」に変わる。"
+},
+"always": {
+"ipa": "/ˈɔːlweɪz/",
+"phonics": [
+{
+"chunk": "al",
+"sound": "オール"
+},
+{
+"chunk": "ways",
+"sound": "ウェイズ"
+}
+],
+"tip": "al は「オール」。also、already、almost も同じ。"
+},
+"happy": {
+"ipa": "/ˈhæpi/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ア（短）"
+},
+{
+"chunk": "pp",
+"sound": "プ"
+},
+{
+"chunk": "y",
+"sound": "イ"
+}
+],
+"tip": "語末の y は「イ」。funny、sunny、lucky も同じ。"
+},
+"world": {
+"ipa": "/wɜːrld/",
+"phonics": [
+{
+"chunk": "wor",
+"sound": "ワー"
+},
+{
+"chunk": "ld",
+"sound": "ルド"
+}
+],
+"tip": "wor は「ワー」。work、word、worse も同じ。w の後の or は「アー」になる。"
+},
+"music": {
+"ipa": "/ˈmjuːzɪk/",
+"phonics": [
+{
+"chunk": "mu",
+"sound": "ミュ"
+},
+{
+"chunk": "sic",
+"sound": "ズィック"
+}
+],
+"tip": "mu は「ミュ」。music の s は「ズ」の発音。"
+},
+"special": {
+"ipa": "/ˈspeʃəl/",
+"phonics": [
+{
+"chunk": "sp",
+"sound": "スプ"
+},
+{
+"chunk": "ec",
+"sound": "エ"
+},
+{
+"chunk": "ial",
+"sound": "シャル"
+}
+],
+"tip": "cial は「シャル」。social、official も同じ語尾。"
+},
+"charm": {
+"ipa": "/tʃɑːrm/",
+"phonics": [
+{
+"chunk": "ch",
+"sound": "チ"
+},
+{
+"chunk": "ar",
+"sound": "アー"
+},
+{
+"chunk": "m",
+"sound": "ム"
+}
+],
+"tip": "charm の ch は「チ」。ar は「アー」。car、star も同じ。"
+},
+"ski": {
+"ipa": "/skiː/",
+"phonics": [
+{
+"chunk": "sk",
+"sound": "スク"
+},
+{
+"chunk": "i",
+"sound": "イー"
+}
+],
+"tip": "ski の i は「イー」。語末の i が「イー」になるのはスポーツ名に多い。"
+},
+"snow": {
+"ipa": "/snoʊ/",
+"phonics": [
+{
+"chunk": "sn",
+"sound": "スン"
+},
+{
+"chunk": "ow",
+"sound": "オウ"
+}
+],
+"tip": "ow は「オウ」か「アウ」の2通り。snow は「オウ」。cow は「アウ」。"
+},
+"care": {
+"ipa": "/ker/",
+"phonics": [
+{
+"chunk": "a_e",
+"sound": "エア"
+},
+{
+"chunk": "re",
+"sound": "ア"
+}
+],
+"tip": "are は「エア」。dare、share、rare も同じ。"
+},
+"wonderful": {
+"ipa": "/ˈwʌndərfəl/",
+"phonics": [
+{
+"chunk": "won",
+"sound": "ワン"
+},
+{
+"chunk": "der",
+"sound": "ダー"
+},
+{
+"chunk": "ful",
+"sound": "フル"
+}
+],
+"tip": "ful は「フル」。useful、peaceful、careful も同じ語尾。"
+},
+"popular": {
+"ipa": "/ˈpɑːpjələr/",
+"phonics": [
+{
+"chunk": "pop",
+"sound": "ポプ"
+},
+{
+"chunk": "u",
+"sound": "ュ"
+},
+{
+"chunk": "lar",
+"sound": "ラー"
+}
+],
+"tip": "ular は「ュラー」。regular、similar も同じ語尾。"
+},
+"question": {
+"ipa": "/ˈkwestʃən/",
+"phonics": [
+{
+"chunk": "qu",
+"sound": "クウ"
+},
+{
+"chunk": "esti",
+"sound": "エスチ"
+},
+{
+"chunk": "on",
+"sound": "ョン"
+}
+],
+"tip": "qu は「クウ」。quick、quiet も同じ。tion は「チョン」になることも。"
+},
+"internet": {
+"ipa": "/ˈɪntərnet/",
+"phonics": [
+{
+"chunk": "in",
+"sound": "イン"
+},
+{
+"chunk": "ter",
+"sound": "ター"
+},
+{
+"chunk": "net",
+"sound": "ネット"
+}
+],
+"tip": "inter は「間に」という意味の接頭辞。international、internet も同じ。"
+},
+"light": {
+"ipa": "/laɪt/",
+"phonics": [
+{
+"chunk": "igh",
+"sound": "アイ"
+},
+{
+"chunk": "gh",
+"sound": "発音しない"
+}
+],
+"tip": "igh は「アイ」。night、fight、right も同じ。gh は発音しない。"
+},
+"night": {
+"ipa": "/naɪt/",
+"phonics": [
+{
+"chunk": "igh",
+"sound": "アイ"
+},
+{
+"chunk": "gh",
+"sound": "発音しない"
+}
+],
+"tip": "igh は「アイ」。light、might、tight も同じ。gh は発音しない。"
+},
+"think": {
+"ipa": "/θɪŋk/",
+"phonics": [
+{
+"chunk": "th",
+"sound": "ス（無声）"
+},
+{
+"chunk": "i",
+"sound": "イ"
+},
+{
+"chunk": "nk",
+"sound": "ンク"
+}
+],
+"tip": "th は「ス」（無声）。think、three、thank も同じ。nk は「ンク」。"
+},
+"phone": {
+"ipa": "/foʊn/",
+"phonics": [
+{
+"chunk": "ph",
+"sound": "フ"
+},
+{
+"chunk": "o_e",
+"sound": "オウ"
+}
+],
+"tip": "ph は「フ」。photo、dolphin も同じ。o_e（マジックe）は「オウ」。"
+},
+"knife": {
+"ipa": "/naɪf/",
+"phonics": [
+{
+"chunk": "kn",
+"sound": "ン（k発音しない）"
+},
+{
+"chunk": "i_e",
+"sound": "アイ"
+}
+],
+"tip": "kn は「ン」。k を発音しない。know、knee、knock も同じ。"
+},
+"write": {
+"ipa": "/raɪt/",
+"phonics": [
+{
+"chunk": "wr",
+"sound": "ル（w発音しない）"
+},
+{
+"chunk": "i_e",
+"sound": "アイ"
+}
+],
+"tip": "wr は「ル」。w を発音しない。wrap、wrist も同じ。"
+},
+"know": {
+"ipa": "/noʊ/",
+"phonics": [
+{
+"chunk": "kn",
+"sound": "ン（k発音しない）"
+},
+{
+"chunk": "ow",
+"sound": "オウ"
+}
+],
+"tip": "kn の k は発音しない。know、knee、knock も同じ。"
+},
+"open": {
+"ipa": "/ˈoʊpən/",
+"phonics": [
+{
+"chunk": "o",
+"sound": "オウ"
+},
+{
+"chunk": "pen",
+"sound": "ペン"
+}
+],
+"tip": "open の o は「オウ」。go、no、so も語末や音節末の o は「オウ」。"
+},
+"window": {
+"ipa": "/ˈwɪndoʊ/",
+"phonics": [
+{
+"chunk": "win",
+"sound": "ウィン"
+},
+{
+"chunk": "dow",
+"sound": "ドウ"
+}
+],
+"tip": "ow は「オウ」。window、below、show も同じ。"
+},
+"moment": {
+"ipa": "/ˈmoʊmənt/",
+"phonics": [
+{
+"chunk": "mo",
+"sound": "モウ"
+},
+{
+"chunk": "ment",
+"sound": "メント"
+}
+],
+"tip": "ment は「メント」。moment、argument も同じ語尾。"
+},
+"homework": {
+"ipa": "/ˈhoʊmwɜːrk/",
+"phonics": [
+{
+"chunk": "home",
+"sound": "ホウム"
+},
+{
+"chunk": "work",
+"sound": "ワーク"
+}
+],
+"tip": "home の o_e は「オウ」。work の wor は「ワー」。"
+},
+"place": {
+"ipa": "/pleɪs/",
+"phonics": [
+{
+"chunk": "pl",
+"sound": "プル"
+},
+{
+"chunk": "a_e",
+"sound": "エイ"
+}
+],
+"tip": "a_e（マジックe）は「エイ」。place、face、race も同じ。"
+},
+"people": {
+"ipa": "/ˈpiːpəl/",
+"phonics": [
+{
+"chunk": "eo",
+"sound": "イー"
+},
+{
+"chunk": "ple",
+"sound": "プル"
+}
+],
+"tip": "people の eo は「イー」。この組み合わせは珍しいので覚えておこう。"
+},
+"angry": {
+"ipa": "/ˈæŋɡri/",
+"phonics": [
+{
+"chunk": "an",
+"sound": "アン"
+},
+{
+"chunk": "gr",
+"sound": "グル"
+},
+{
+"chunk": "y",
+"sound": "イ"
+}
+],
+"tip": "angry の a は短い「ア」。ang は「アング」。bang、sang も同じ。"
+},
+"funny": {
+"ipa": "/ˈfʌni/",
+"phonics": [
+{
+"chunk": "u",
+"sound": "ア"
+},
+{
+"chunk": "nn",
+"sound": "ン"
+},
+{
+"chunk": "y",
+"sound": "イ"
+}
+],
+"tip": "funny の u は「ア」。fun、run も同じ。語末の y は「イ」。"
+},
+"along": {
+"ipa": "/əˈlɔːŋ/",
+"phonics": [
+{
+"chunk": "a",
+"sound": "ァ（弱）"
+},
+{
+"chunk": "long",
+"sound": "ロング"
+}
+],
+"tip": "語頭の a が弱くなるパターン。about、away も同じ。"
+},
+"straight": {
+"ipa": "/streɪt/",
+"phonics": [
+{
+"chunk": "str",
+"sound": "ストル"
+},
+{
+"chunk": "aigh",
+"sound": "エイ"
+},
+{
+"chunk": "t",
+"sound": "ト"
+}
+],
+"tip": "aigh は「エイ」。straight、eight も同じ珍しいパターン。"
+},
+"building": {
+"ipa": "/ˈbɪldɪŋ/",
+"phonics": [
+{
+"chunk": "ui",
+"sound": "イ"
+},
+{
+"chunk": "ld",
+"sound": "ルド"
+},
+{
+"chunk": "ing",
+"sound": "イング"
+}
+],
+"tip": "build の ui は「イ」。guild、guilt も同じ珍しいパターン。"
+},
+"hospital": {
+"ipa": "/ˈhɑːspɪtəl/",
+"phonics": [
+{
+"chunk": "hos",
+"sound": "ホス"
+},
+{
+"chunk": "pi",
+"sound": "ピ"
+},
+{
+"chunk": "tal",
+"sound": "タル"
+}
+],
+"tip": "hospital は3音節。「ホス・ピ・タル」と読む。"
+},
+"library": {
+"ipa": "/ˈlaɪbreri/",
+"phonics": [
+{
+"chunk": "li",
+"sound": "ライ"
+},
+{
+"chunk": "bra",
+"sound": "ブラ"
+},
+{
+"chunk": "ry",
+"sound": "リ"
+}
+],
+"tip": "library の i は「アイ」。lib + rary で3音節。"
+},
+"summer": {
+"ipa": "/ˈsʌmər/",
+"phonics": [
+{
+"chunk": "u",
+"sound": "ア"
+},
+{
+"chunk": "mm",
+"sound": "ム"
+},
+{
+"chunk": "er",
+"sound": "アー"
+}
+],
+"tip": "summer の u は「ア」。sun、bus も同じ。er は「アー」。"
+}
+};
+
+// ════════════════════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════════════════════
+const CONFIG = {
+  dataSource: 'excel',           // 'excel' | 'csv' | 'json' (将来切替用)
+  excelPath: 'data/eigo_J1.xlsx',
+  dbName: 'eigo_app_db',
+  dbVersion: 1,
+};
+
+// ════════════════════════════════════════════════════════════
+//  DATA PROVIDER MODULE
+//  ここだけ差し替えれば Excel → CSV → JSON へ移行できる
+// ════════════════════════════════════════════════════════════
+const DataProvider = (() => {
+
+  // 列名の候補マッピング（将来の列追加にも対応しやすいよう配列で定義）
+  const COLMAP = {
+    no:        ['No','no','番号','ID','id'],
+    unit:      ['単元','ユニット','Unit','unit'],
+    question:  ['問題','word','Word','英単語','英文','Question'],
+    answer:    ['答え','meaning','Meaning','意味','Answer'],
+    importance:['重要度','Importance','importance'],
+    memo:      ['メモ','tip','Tip','ワンポイント','Memo'],
+    tag:       ['タグ','Tag','tag'],
+    image:     ['画像','Image','image'],
+    audio:     ['音声','Audio','audio'],
+    hint:      ['ヒント','Hint','hint'],
+    freq:      ['出題頻度','Frequency','frequency'],
+  };
+
+  function pick(row, names){
+    for(const n of names){
+      for(const k of Object.keys(row)){
+        if(k.trim()===n) return row[k];
+      }
+    }
+    return '';
+  }
+
+  function normalizeRow(row, subject){
+    const no = pick(row, COLMAP.no);
+    const unit = String(pick(row, COLMAP.unit)||'その他').trim();
+    const question = String(pick(row, COLMAP.question)||'').trim();
+    const answer = String(pick(row, COLMAP.answer)||'').trim();
+    if(!question || !answer) return null;
+    const importance = String(pick(row, COLMAP.importance)||'').trim();
+    const memo = String(pick(row, COLMAP.memo)||'').trim();
+    const tag = String(pick(row, COLMAP.tag)||'').trim();
+    const image = String(pick(row, COLMAP.image)||'').trim();
+    const audio = String(pick(row, COLMAP.audio)||'').trim();
+    const hint = String(pick(row, COLMAP.hint)||'').trim();
+    const freq = String(pick(row, COLMAP.freq)||'').trim();
+    const id = (no!==''&&no!==undefined&&no!==null)
+      ? `${subject}::no${no}`
+      : `${subject}::${unit}::${question}`.slice(0,120);
+    return {id, subject, unit, question, answer, importance, memo, tag, image, audio, hint, freq};
+  }
+
+  async function fetchFromExcel(){
+    const url = CONFIG.excelPath + '?t=' + Date.now(); // cache-bust on manual update
+    const res = await fetch(url, {cache:'no-store'});
+    if(!res.ok) throw new Error('Excelファイルの取得に失敗しました ('+res.status+')');
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const items = [];
+    wb.SheetNames.forEach(sheetName=>{
+      if(sheetName==='使い方')return; // ガイドシートはスキップ
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      rows.forEach(row=>{
+        const item = normalizeRow(row, sheetName);
+        if(item) items.push(item);
+      });
+    });
+    return items;
+  }
+
+  async function fetchFromCSV(){
+    throw new Error('CSVデータソースは未実装です');
+  }
+  async function fetchFromJSON(){
+    throw new Error('JSONデータソースは未実装です');
+  }
+
+  const fetchers = { excel: fetchFromExcel, csv: fetchFromCSV, json: fetchFromJSON };
+
+  async function fetchQuestionData(){
+    const fn = fetchers[CONFIG.dataSource];
+    if(!fn) throw new Error('不明なデータソース: '+CONFIG.dataSource);
+    return await fn();
+  }
+
+  return { fetchQuestionData };
+})();
+
+// ════════════════════════════════════════════════════════════
+//  INDEXEDDB (問題データキャッシュ)
+// ════════════════════════════════════════════════════════════
+function idbOpen(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(CONFIG.dbName, CONFIG.dbVersion);
+    req.onupgradeneeded = e=>{
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains('questions')) db.createObjectStore('questions',{keyPath:'id'});
+      if(!db.objectStoreNames.contains('meta')) db.createObjectStore('meta',{keyPath:'key'});
+    };
+    req.onsuccess = e=>resolve(e.target.result);
+    req.onerror = e=>reject(e.target.error);
+  });
+}
+async function idbPutAll(storeName, items){
+  const db = await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(storeName,'readwrite');
+    const store = tx.objectStore(storeName);
+    store.clear();
+    items.forEach(it=>store.put(it));
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = e=>reject(e.target.error);
+  });
+}
+async function idbGetAll(storeName){
+  const db = await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(storeName,'readonly');
+    const store = tx.objectStore(storeName);
+    const req = store.getAll();
+    req.onsuccess = ()=>resolve(req.result||[]);
+    req.onerror = e=>reject(e.target.error);
+  });
+}
+async function idbSetMeta(key, value){
+  const db = await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction('meta','readwrite');
+    tx.objectStore('meta').put({key, value});
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = e=>reject(e.target.error);
+  });
+}
+async function idbGetMeta(key){
+  const db = await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction('meta','readonly');
+    const req = tx.objectStore('meta').get(key);
+    req.onsuccess = ()=>resolve(req.result?req.result.value:null);
+    req.onerror = e=>reject(e.target.error);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  SM-2 スペースド・リピティション
+//  学習履歴は localStorage に保存（問題データとは独立）
+// ════════════════════════════════════════════════════════════
+let srStore = {}; // id -> {repetition, interval, easeFactor, nextReview, lapses, lastReview}
+function loadSR(){ try{ srStore = JSON.parse(localStorage.getItem('sr_store_v2')||'{}'); }catch(e){ srStore={}; } }
+function saveSR(){ try{ localStorage.setItem('sr_store_v2', JSON.stringify(srStore)); }catch(e){} }
+
+function getSR(id){
+  if(!srStore[id]) srStore[id] = {repetition:0, interval:0, easeFactor:2.5, nextReview:0, lapses:0, lastReview:0};
+  return srStore[id];
+}
+// quality: 5=正解, 2=不正解 (SM-2アルゴリズム)
+function sm2Update(id, correct){
+  const c = getSR(id);
+  const quality = correct ? 5 : 2;
+  if(quality < 3){
+    c.repetition = 0;
+    c.interval = 1;
+    c.lapses = (c.lapses||0) + 1;
+  } else {
+    if(c.repetition === 0) c.interval = 1;
+    else if(c.repetition === 1) c.interval = 6;
+    else c.interval = Math.round(c.interval * c.easeFactor);
+    c.repetition += 1;
+  }
+  c.easeFactor = Math.max(1.3, c.easeFactor + (0.1 - (5-quality)*(0.08+(5-quality)*0.02)));
+  c.lastReview = Date.now();
+  c.nextReview = Date.now() + c.interval*86400000;
+  saveSR();
+  return c;
+}
+function srLabel(id){
+  const c = getSR(id);
+  if((c.lapses||0) > 2) return 'weak';
+  if(c.repetition === 0 && c.lastReview === 0) return 'new';
+  return 'review';
+}
+function isDueToday(id){
+  const c = srStore[id];
+  if(!c || c.lastReview===0) return true; // 未学習は「今日の復習」対象に含める
+  return c.nextReview <= Date.now();
+}
+
+// ── 旧データからの移行 (sr_data_en / sr_grammar) ──
+function migrateOldSRData(allItems){
+  const oldVocab = JSON.parse(localStorage.getItem('sr_data_en')||'{}');
+  const oldGrammar = JSON.parse(localStorage.getItem('sr_grammar')||'{}');
+  if(Object.keys(oldVocab).length===0 && Object.keys(oldGrammar).length===0) return;
+  if(localStorage.getItem('sr_migrated_v2')) return; // 一度だけ実行
+
+  const levelToInterval = [0,1,3,7,14,30];
+
+  allItems.forEach(item=>{
+    // 単語データ: 旧キーは英単語そのもの
+    let old = oldVocab[item.question] || oldVocab[item.answer];
+    // 文法データ: 旧キーは英文の先頭50文字
+    if(!old){
+      const gKey1 = item.question.slice(0,50);
+      const gKey2 = item.answer.slice(0,50);
+      old = oldGrammar[gKey1] || oldGrammar[gKey2];
+    }
+    if(old){
+      const c = getSR(item.id);
+      c.repetition = old.level || 0;
+      c.interval = levelToInterval[old.level||0] || 0;
+      c.easeFactor = 2.5;
+      c.lapses = old.missCount || 0;
+      c.nextReview = old.nextReview || 0;
+      c.lastReview = old.nextReview ? Date.now() : 0;
+    }
+  });
+  saveSR();
+  localStorage.setItem('sr_migrated_v2','1');
+}
+
+loadSR();
+
+// ════════════════════════════════════════════════════════════
+//  APP STATE
+// ════════════════════════════════════════════════════════════
+let ALL_ITEMS = [];              // {id,subject,unit,question,answer,importance,memo,...}
+let SUBJECTS = {};                // subject -> {unit -> [items]}
+let studyMode = 'qa';             // 'qa' | 'choice'
+let countMode = 'all';            // 'all' | '15'
+let usScope = null;               // {type:'subject', subject} | {type:'all'}
+let usSelectedKeys = [];          // "subject::unit" strings
+
+let queue = [];
+let qCurrent = 0;
+let qCorrect=0, qWrong=0, qStreak=0, qMaxStreak=0, qSessionWrong=[];
+
+// ════════════════════════════════════════════════════════════
+//  INIT / LOAD FLOW
+// ════════════════════════════════════════════════════════════
+async function initApp(){
+  showScreen('screen-loading');
+  let cached = [];
+  try{ cached = await idbGetAll('questions'); }catch(e){ cached = []; }
+
+  if(cached.length === 0){
+    // 初回起動: キャッシュが無いので自動取得
+    document.getElementById('loading-text').textContent = '初回起動: 問題データを取得しています...';
+    try{
+      await doUpdateData(true);
+    }catch(e){
+      document.getElementById('loading-text').textContent = '❌ データ取得に失敗しました: '+e.message;
+      return;
+    }
+  } else {
+    ALL_ITEMS = cached;
+    rebuildSubjects();
+    migrateOldSRData(ALL_ITEMS);
+  }
+  renderHome();
+  showScreen('screen-home');
+}
+
+function rebuildSubjects(){
+  SUBJECTS = {};
+  ALL_ITEMS.forEach(item=>{
+    if(!SUBJECTS[item.subject]) SUBJECTS[item.subject] = {};
+    if(!SUBJECTS[item.subject][item.unit]) SUBJECTS[item.subject][item.unit] = [];
+    SUBJECTS[item.subject][item.unit].push(item);
+  });
+}
+
+async function doUpdateData(isInitial){
+  const btn = document.getElementById('update-btn');
+  const status = document.getElementById('update-status');
+  if(btn) btn.disabled = true;
+  if(status){ status.textContent = '取得中...'; status.className='update-status'; }
+
+  if(!navigator.onLine){
+    if(status){ status.textContent = '❌ オフラインです。ネット接続後にお試しください。'; status.className='update-status err'; }
+    if(btn) btn.disabled = false;
+    throw new Error('オフライン');
+  }
+
+  const items = await DataProvider.fetchQuestionData();
+  if(items.length === 0) throw new Error('問題データが0件でした');
+
+  await idbPutAll('questions', items);
+  await idbSetMeta('lastUpdated', Date.now());
+
+  ALL_ITEMS = items;
+  rebuildSubjects();
+  migrateOldSRData(ALL_ITEMS);
+
+  if(status){ status.textContent = `✅ 最新データを取得しました（${items.length}問）`; status.className='update-status ok'; }
+  if(btn) btn.disabled = false;
+  updateLastUpdatedLabel();
+}
+
+async function updateData(){
+  try{
+    await doUpdateData(false);
+    renderHome();
+  }catch(e){
+    const status = document.getElementById('update-status');
+    if(status){ status.textContent = '❌ '+e.message; status.className='update-status err'; }
+  }
+}
+
+async function updateLastUpdatedLabel(){
+  const ts = await idbGetMeta('lastUpdated');
+  const el = document.getElementById('last-updated');
+  if(!el) return;
+  if(ts) el.textContent = '最終更新: ' + new Date(ts).toLocaleString('ja-JP');
+  else el.textContent = '';
+}
+
+// ════════════════════════════════════════════════════════════
+//  HOME SCREEN
+// ════════════════════════════════════════════════════════════
+function masteryOf(item){ return getSR(item.id).repetition >= 3; }
+
+function renderHome(){
+  // クイックアクション件数
+  const todayItems = ALL_ITEMS.filter(it=>isDueToday(it.id));
+  const weakItems = ALL_ITEMS.filter(it=>(getSR(it.id).lapses||0) > 0);
+  document.getElementById('qc-today').textContent = `${todayItems.length}問`;
+  document.getElementById('qc-random').textContent = `${ALL_ITEMS.length}問からランダム`;
+  document.getElementById('qc-weak').textContent = `${weakItems.length}問`;
+  document.getElementById('qc-all').textContent = `${ALL_ITEMS.length}問`;
+
+  // 教科グリッド
+  const subjectIcons = {'単語':'📖','文法':'✏️','熟語':'🧩','リスニング':'🎧'};
+  const grid = document.getElementById('subject-grid');
+  grid.innerHTML='';
+  Object.keys(SUBJECTS).forEach(subj=>{
+    const units = SUBJECTS[subj];
+    let total=0, mastered=0;
+    Object.values(units).forEach(items=>{
+      total += items.length;
+      mastered += items.filter(masteryOf).length;
+    });
+    const pct = total===0?0:Math.round(mastered/total*100);
+    const div = document.createElement('div');
+    div.className='subject-card';
+    div.innerHTML = `<div class="subject-icon">${subjectIcons[subj]||'📘'}</div>
+      <div class="subject-name">${subj}</div>
+      <div class="subject-progress">${pct}%（${mastered}/${total}）</div>`;
+    div.onclick=()=>goSubjectUnits(subj);
+    grid.appendChild(div);
+  });
+
+  updateLastUpdatedLabel();
+}
+
+function startQuickMode(type){
+  let items = [];
+  let title = '';
+  if(type==='today'){ items = ALL_ITEMS.filter(it=>isDueToday(it.id)); title='今日の復習'; }
+  else if(type==='random'){ items = shuffle([...ALL_ITEMS]).slice(0,20); title='ランダム'; }
+  else if(type==='weak'){ items = ALL_ITEMS.filter(it=>(getSR(it.id).lapses||0)>0); title='苦手問題'; }
+  else if(type==='all'){ items = [...ALL_ITEMS]; title='全問題'; }
+
+  if(items.length===0){
+    alert(title+'に該当する問題がありません。');
+    return;
+  }
+  queue = shuffle(items);
+  if(countMode==='15') queue = queue.slice(0,15);
+  studyMode = 'qa';
+  startQueueSession();
+}
+
+// ════════════════════════════════════════════════════════════
+//  UNIT SELECT SCREEN (subject-scoped or all)
+// ════════════════════════════════════════════════════════════
+function goSubjectUnits(subject){
+  usScope = {type:'subject', subject};
+  usSelectedKeys = [];
+  document.getElementById('unitselect-title').textContent = subject + ' の単元';
+  showScreen('screen-unitselect');
+  buildUnitSelectGrid();
+}
+function showAllUnits(){
+  usScope = {type:'all'};
+  usSelectedKeys = [];
+  document.getElementById('unitselect-title').textContent = '全単元一覧';
+  showScreen('screen-unitselect');
+  buildUnitSelectGrid();
+}
+
+function getUSUnitList(){
+  // returns [{key, subject, unit, items}]
+  const list = [];
+  const subjectsToScan = usScope.type==='subject' ? [usScope.subject] : Object.keys(SUBJECTS);
+  subjectsToScan.forEach(subj=>{
+    Object.keys(SUBJECTS[subj]||{}).forEach(unit=>{
+      list.push({key:`${subj}::${unit}`, subject:subj, unit, items:SUBJECTS[subj][unit]});
+    });
+  });
+  return list;
+}
+
+function buildUnitSelectGrid(){
+  const grid = document.getElementById('unitselect-grid');
+  grid.innerHTML='';
+  const list = getUSUnitList();
+  list.forEach(u=>{
+    const mastered = u.items.filter(masteryOf).length;
+    const pct = Math.round(mastered/u.items.length*100);
+    const div = document.createElement('div');
+    div.className='unit-card'+(usSelectedKeys.includes(u.key)?' selected':'');
+    div.dataset.key = u.key;
+    const subjTag = usScope.type==='all' ? `<div class="unit-subject-tag">${u.subject}</div>` : '';
+    div.innerHTML = `${subjTag}<div class="unit-name">${u.unit}</div><div class="unit-count">${u.items.length}問 · 習熟${pct}%</div><div class="unit-mastery"><div class="unit-mastery-bar" style="width:${pct}%"></div></div>`;
+    div.onclick=()=>toggleUSUnit(u.key, div);
+    grid.appendChild(div);
+  });
+  updateUSStartBtn();
+}
+function toggleUSUnit(key, el){
+  const i = usSelectedKeys.indexOf(key);
+  if(i===-1){ usSelectedKeys.push(key); el.classList.add('selected'); }
+  else{ usSelectedKeys.splice(i,1); el.classList.remove('selected'); }
+  updateUSStartBtn();
+}
+function usSelectAll(){
+  usSelectedKeys = getUSUnitList().map(u=>u.key);
+  document.querySelectorAll('#unitselect-grid .unit-card').forEach(el=>el.classList.add('selected'));
+  updateUSStartBtn();
+}
+function usSelectNone(){
+  usSelectedKeys = [];
+  document.querySelectorAll('#unitselect-grid .unit-card').forEach(el=>el.classList.remove('selected'));
+  updateUSStartBtn();
+}
+function usSelectWeak(){
+  usSelectedKeys = [];
+  document.querySelectorAll('#unitselect-grid .unit-card').forEach(el=>el.classList.remove('selected'));
+  getUSUnitList().forEach(u=>{
+    if(u.items.some(it=>(getSR(it.id).lapses||0)>0)){
+      usSelectedKeys.push(u.key);
+      document.querySelector(`#unitselect-grid [data-key="${u.key}"]`)?.classList.add('selected');
+    }
+  });
+  updateUSStartBtn();
+}
+function selectStudyMode(m){
+  studyMode = m;
+  document.querySelectorAll('[data-mode]').forEach(el=>el.classList.toggle('selected', el.dataset.mode===m));
+}
+function selectCountMode(c){
+  countMode = c;
+  document.querySelectorAll('[data-count]').forEach(el=>el.classList.toggle('selected', el.dataset.count===c));
+}
+function updateUSStartBtn(){
+  const btn = document.getElementById('us-start-btn');
+  const total = getUSSelectedItems().length;
+  btn.disabled = usSelectedKeys.length===0;
+  btn.textContent = usSelectedKeys.length>0 ? `スタート (${total}問)` : 'スタート';
+}
+function getUSSelectedItems(){
+  const list = getUSUnitList();
+  let items = [];
+  usSelectedKeys.forEach(key=>{
+    const u = list.find(x=>x.key===key);
+    if(u) items = items.concat(u.items);
+  });
+  return items;
+}
+function startSelectedQuiz(){
+  const items = getUSSelectedItems();
+  queue = [...items].sort((a,b)=>{
+    const sa=getSR(a.id), sb=getSR(b.id);
+    const ma=sa.lapses||0, mb=sb.lapses||0;
+    if(ma!==mb) return mb-ma;
+    return (sa.nextReview||0)-(sb.nextReview||0);
+  });
+  queue = shuffleStablePriority(queue);
+  if(countMode==='15') queue = queue.slice(0,15);
+  startQueueSession();
+}
+
+// ════════════════════════════════════════════════════════════
+//  QUIZ SESSION (shared logic)
+// ════════════════════════════════════════════════════════════
+function startQueueSession(){
+  qCurrent=0; qCorrect=0; qWrong=0; qStreak=0; qMaxStreak=0; qSessionWrong=[];
+  if(studyMode==='qa'){ showScreen('screen-study-qa'); showQAItem(); }
+  else{ showScreen('screen-study-choice'); showChoiceItem(); }
+}
+
+// ── QA (問題→答え) self-check ──
+function showQAItem(){
+  if(qCurrent>=queue.length){ showResult(); return; }
+  const it = queue[qCurrent];
+  const lbl = srLabel(it.id);
+  const b = document.getElementById('qa-sr-badge');
+  b.textContent = lbl==='new'?'NEW':lbl==='weak'?'苦手':'復習';
+  b.className = `sr-badge ${lbl}`;
+  document.getElementById('qa-question').textContent = it.question;
+  document.getElementById('qa-unit-tag').textContent = `${it.subject} / ${it.unit}`;
+  document.getElementById('qa-answer').textContent = it.answer;
+  const memoEl = document.getElementById('qa-memo');
+  if(it.memo){ memoEl.innerHTML = `<span class="tip-icon">💡</span>${it.memo}`; memoEl.classList.remove('hidden'); }
+  else{ memoEl.classList.add('hidden'); memoEl.innerHTML=''; }
+  document.getElementById('qa-reveal-area').classList.remove('hidden');
+  document.getElementById('qa-answer-area').classList.add('hidden');
+  updateQuizProgress('qa');
+}
+function revealQA(){
+  document.getElementById('qa-reveal-area').classList.add('hidden');
+  document.getElementById('qa-answer-area').classList.remove('hidden');
+}
+function answerQA(correct){
+  const it = queue[qCurrent];
+  sm2Update(it.id, correct);
+  if(correct){ qCorrect++; qStreak++; qMaxStreak=Math.max(qMaxStreak,qStreak); }
+  else{ qWrong++; qStreak=0; qSessionWrong.push(it); }
+  document.getElementById('qa-streak').textContent = `🔥 ${qStreak}`;
+  qCurrent++; showQAItem();
+}
+
+// ── Choice (答え→問題) 4択 ──
+function showChoiceItem(){
+  if(qCurrent>=queue.length){ showResult(); return; }
+  const it = queue[qCurrent];
+  const lbl = srLabel(it.id);
+  const b = document.getElementById('ch-sr-badge');
+  b.textContent = lbl==='new'?'NEW':lbl==='weak'?'苦手':'復習';
+  b.className = `sr-badge ${lbl}`;
+  document.getElementById('ch-question').textContent = it.answer;
+  document.getElementById('ch-unit-tag').textContent = `${it.subject} / ${it.unit}`;
+  document.getElementById('ch-phonics-area').innerHTML='';
+  updateQuizProgress('ch');
+
+  // 同じ教科内から誤答選択肢を作る
+  const pool = ALL_ITEMS.filter(x=>x.subject===it.subject && x.id!==it.id);
+  const distractors = shuffle(pool).slice(0,3);
+  const choices = shuffle([...distractors, it]);
+  const grid = document.getElementById('ch-choices-grid');
+  grid.innerHTML='';
+  const labels=['①','②','③','④'];
+  choices.forEach((c,i)=>{
+    const btn = document.createElement('button');
+    btn.className='choice-btn';
+    btn.innerHTML = `<span class="choice-num">${labels[i]}</span><span>${c.question}</span>`;
+    btn.onclick=()=>selectChoiceAnswer(c.id===it.id, btn, it);
+    grid.appendChild(btn);
+  });
+  document.getElementById('ch-next-btn').classList.remove('visible');
+}
+function showFeedback(correct){
+  const mark = document.getElementById('feedback-mark');
+  mark.textContent = correct?'⭕':'❌';
+  mark.className='feedback-mark show';
+  setTimeout(()=>{ mark.className='feedback-mark hide'; },400);
+  setTimeout(()=>{ mark.className='feedback-mark'; },750);
+}
+function selectChoiceAnswer(correct, btn, it){
+  document.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+  sm2Update(it.id, correct);
+  showFeedback(correct);
+  if(correct){
+    btn.classList.add('correct-ans'); qCorrect++; qStreak++; qMaxStreak=Math.max(qMaxStreak,qStreak);
+  } else {
+    btn.classList.add('wrong-ans'); qWrong++; qStreak=0; qSessionWrong.push(it);
+    document.querySelectorAll('.choice-btn').forEach(b=>{
+      const span=b.querySelector('span:last-child');
+      if(span && span.textContent===it.question) b.classList.add('correct-ans');
+    });
+  }
+  document.getElementById('ch-streak').textContent = `🔥 ${qStreak}`;
+  document.getElementById('ch-next-btn').classList.add('visible');
+  // 英単語らしければ発音パネルを表示（正解時のみ）
+  if(correct && looksEnglish(it.question)){
+    showPhonicsForWord('ch-phonics-area', it.question, it.memo);
+  }
+  setTimeout(()=>{
+    const p=document.getElementById('ch-phonics-area');
+    if(p) p.scrollIntoView({behavior:'smooth',block:'nearest'});
+  },150);
+}
+function nextChoice(){ qCurrent++; showChoiceItem(); }
+
+function updateQuizProgress(prefix){
+  const total = queue.length;
+  const pct = Math.round(qCurrent/total*100);
+  document.getElementById(`${prefix}-prog-text`).textContent = `${qCurrent+1} / ${total}`;
+  document.getElementById(`${prefix}-prog-fill`).style.width = pct+'%';
+  const it = queue[qCurrent];
+  document.getElementById(`${prefix}-unit-text`).textContent = it ? `${it.subject}/${it.unit}` : '';
+}
+
+// ════════════════════════════════════════════════════════════
+//  RESULT SCREEN
+// ════════════════════════════════════════════════════════════
+function showResult(){
+  showScreen('screen-result');
+  const total = qCorrect+qWrong;
+  const pct = total===0?0:Math.round(qCorrect/total*100);
+  document.getElementById('result-score').textContent = pct+'%';
+  document.getElementById('result-emoji').textContent = pct>=90?'🏆':pct>=70?'🎉':pct>=50?'💪':'📚';
+  document.getElementById('r-correct').textContent = qCorrect;
+  document.getElementById('r-wrong').textContent = qWrong;
+  document.getElementById('r-streak').textContent = qMaxStreak;
+  const ws = document.getElementById('weak-section');
+  if(qSessionWrong.length>0){
+    ws.innerHTML = `<div class="weak-title">❌ 間違えた問題 (${qSessionWrong.length}問)</div><div class="weak-list">${
+      qSessionWrong.map(it=>`<div class="weak-item"><div><div class="weak-en">${it.question}</div><div class="weak-jp">${it.answer}</div></div><span class="weak-miss">ミス${getSR(it.id).lapses||1}回</span></div>`).join('')
+    }</div>`;
+  } else {
+    ws.innerHTML = '<div style="text-align:center;color:var(--green);font-weight:700;padding:16px">🎯 全問正解！</div>';
+  }
+  document.getElementById('retry-btn').onclick = retryWeak;
+  renderHome(); // 進捗を裏で更新
+}
+function retryWeak(){
+  if(qSessionWrong.length===0) return goHome();
+  queue = shuffle([...qSessionWrong]);
+  qCurrent=0; qCorrect=0; qWrong=0; qStreak=0; qMaxStreak=0; qSessionWrong=[];
+  if(studyMode==='qa'){ showScreen('screen-study-qa'); showQAItem(); }
+  else{ showScreen('screen-study-choice'); showChoiceItem(); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  NAVIGATION / UTILS
+// ════════════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goHome(){ renderHome(); showScreen('screen-home'); }
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+function shuffleStablePriority(arr){
+  // 優先度(苦手/期限)でソート済みの配列を、同順位内だけ軽くシャッフル
+  return shuffle([...arr]);
+}
+function looksEnglish(str){
+  return /^[A-Za-z][A-Za-z\s.'\-]*$/.test(str.trim());
+}
+
+// ════════════════════════════════════════════════════════════
+//  PHONICS / IPA (ボーナス機能: 単語がアルファベットのときのみ)
+// ════════════════════════════════════════════════════════════
+let ipaCache={};
+function loadIpaCache(){ try{ ipaCache=JSON.parse(localStorage.getItem('ipa_cache')||'{}'); }catch(e){ ipaCache={}; } }
+function saveIpaCache(){ try{ localStorage.setItem('ipa_cache', JSON.stringify(ipaCache)); }catch(e){} }
+loadIpaCache();
+
+function speakWord(word){
+  if(!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang='en-US'; u.rate=0.9;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+async function fetchIpaFromApi(word){
+  const key=word.toLowerCase();
+  if(ipaCache[key]!==undefined) return ipaCache[key];
+  try{
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(key)}`);
+    if(!res.ok){ ipaCache[key]=''; saveIpaCache(); return ''; }
+    const json = await res.json();
+    const ipa = (json[0]?.phonetics||[]).map(p=>p.text).find(t=>t&&t.trim()) || json[0]?.phonetic || '';
+    ipaCache[key]=ipa; saveIpaCache();
+    return ipa;
+  }catch(e){ ipaCache[key]=''; saveIpaCache(); return ''; }
+}
+
+async function getPhonicsData(word){
+  const key = word.toLowerCase().replace(/[^a-z']/g,'');
+  const builtin = PHONICS_DB[key] || PHONICS_DB[word.toLowerCase()] || null;
+  if(builtin) return builtin;
+  const ipa = await fetchIpaFromApi(word);
+  if(ipa) return {ipa, phonics:[], tip:''};
+  return null;
+}
+
+const PROW_COLORS=['c0','c1','c2','c3','c4'];
+function renderPhonicsPanel(container, word, data, extraTip){
+  const tip = data?.tip || extraTip || '';
+  if(!data){
+    container.innerHTML = `<div class="phonics-panel"><div class="phonics-word-row">
+      <span class="phonics-word">${word}</span>
+      <button class="speak-btn" onclick="speakWord('${word}')" title="発音">🔊</button>
+    </div>${tip?`<div class="tip-card"><span class="tip-icon">💡</span><span>${tip}</span></div>`:''}</div>`;
+    return;
+  }
+  const rows = (data.phonics||[]).map((p,i)=>`
+    <div class="phonics-row ${PROW_COLORS[i%5]}">
+      <span class="phonics-chunk">${p.chunk}</span><span class="phonics-arrow">→</span><span class="phonics-sound">${p.sound}</span>
+    </div>`).join('');
+  container.innerHTML = `<div class="phonics-panel">
+    <div class="phonics-word-row">
+      <span class="phonics-word">${word}</span>
+      <button class="speak-btn" onclick="speakWord('${word}')" title="発音">🔊</button>
+    </div>
+    ${data.ipa?`<div class="phonics-ipa">${data.ipa}</div>`:''}
+    ${rows?`<div class="phonics-rows">${rows}</div>`:''}
+    ${tip?`<div class="tip-card"><span class="tip-icon">💡</span><span>${tip}</span></div>`:''}
+  </div>`;
+}
+async function showPhonicsForWord(containerId, word, memoTip){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const data = await getPhonicsData(word);
+  renderPhonicsPanel(container, word, data, memoTip);
+}
+
+// ════════════════════════════════════════════════════════════
+//  START
+// ════════════════════════════════════════════════════════════
+window.addEventListener('load', initApp);
+
+</script>
+</body>
+</html>
