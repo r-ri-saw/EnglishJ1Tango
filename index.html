@@ -38,13 +38,6 @@
   .top-title{font-size:20px;font-weight:700;text-align:center;margin:20px 0 4px;}
   .top-subtitle{font-size:13px;color:var(--gray);text-align:center;margin-bottom:20px;}
   .section-label{font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.05em;margin:22px 0 10px;}
-  .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .quick-card{background:var(--white);border:2px solid #E5E7EB;border-radius:16px;padding:18px 14px;cursor:pointer;text-align:left;transition:all 0.15s;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
-  .quick-card:hover{border-color:var(--pink-mid);transform:translateY(-2px);}
-  .quick-icon{font-size:26px;margin-bottom:6px;}
-  .quick-name{font-size:14px;font-weight:700;color:var(--dark);}
-  .quick-count{font-size:11px;color:var(--gray);margin-top:2px;}
-  .quick-count.hot{color:var(--red);font-weight:700;}
 
   .subject-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .subject-card{background:var(--white);border:2px solid #E5E7EB;border-radius:18px;padding:22px 14px;cursor:pointer;text-align:center;transition:all 0.18s;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 10px rgba(0,0,0,0.05);}
@@ -83,7 +76,8 @@
   .btn-text:hover{text-decoration:underline;}
   .mode-section{margin-bottom:22px;}
   .mode-label{font-size:13px;font-weight:700;color:var(--gray);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;}
-  .mode-row{display:flex;gap:10px;}
+  .mode-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .mode-row .mode-btn{min-width:90px;}
   .mode-btn{flex:1;padding:14px;border:2px solid #E5E7EB;border-radius:12px;background:var(--white);cursor:pointer;text-align:center;transition:all 0.15s;font-family:'Noto Sans JP',sans-serif;}
   .mode-btn:hover{border-color:var(--pink-mid);}
   .mode-btn.selected{border-color:var(--pink);background:var(--pink-light);}
@@ -215,30 +209,6 @@
   <p class="top-title">今日は何を学習する？</p>
   <p class="top-subtitle">タップして選んでください</p>
 
-  <p class="section-label">クイック学習</p>
-  <div class="quick-grid">
-    <div class="quick-card" onclick="startQuickMode('today')">
-      <div class="quick-icon">📅</div>
-      <div class="quick-name">今日の復習</div>
-      <div class="quick-count" id="qc-today">-</div>
-    </div>
-    <div class="quick-card" onclick="startQuickMode('random')">
-      <div class="quick-icon">🎲</div>
-      <div class="quick-name">ランダム</div>
-      <div class="quick-count" id="qc-random">-</div>
-    </div>
-    <div class="quick-card" onclick="startQuickMode('weak')">
-      <div class="quick-icon">⚠️</div>
-      <div class="quick-name">苦手問題</div>
-      <div class="quick-count hot" id="qc-weak">-</div>
-    </div>
-    <div class="quick-card" onclick="startQuickMode('all')">
-      <div class="quick-icon">📚</div>
-      <div class="quick-name">全問題</div>
-      <div class="quick-count" id="qc-all">-</div>
-    </div>
-  </div>
-
   <p class="section-label">教科一覧</p>
   <div class="subject-grid" id="subject-grid"></div>
 
@@ -286,6 +256,9 @@
       </div>
       <div class="mode-btn" data-count="15" onclick="selectCountMode('15')">
         <div class="mode-icon">⚡</div><div class="mode-name">15問</div><div class="mode-desc">苦手優先で15問</div>
+      </div>
+      <div class="mode-btn" data-count="today" onclick="selectCountMode('today')">
+        <div class="mode-icon">📅</div><div class="mode-name">今日の復習</div><div class="mode-desc" id="today-count-desc">復習日が来た問題</div>
       </div>
     </div>
   </div>
@@ -3508,14 +3481,6 @@ async function updateLastUpdatedLabel(){
 function masteryOf(item){ return getSR(item.id).repetition >= 3; }
 
 function renderHome(){
-  // クイックアクション件数
-  const todayItems = ALL_ITEMS.filter(it=>isDueToday(it.id));
-  const weakItems = ALL_ITEMS.filter(it=>(getSR(it.id).lapses||0) > 0);
-  document.getElementById('qc-today').textContent = `${todayItems.length}問`;
-  document.getElementById('qc-random').textContent = `${ALL_ITEMS.length}問からランダム`;
-  document.getElementById('qc-weak').textContent = `${weakItems.length}問`;
-  document.getElementById('qc-all').textContent = `${ALL_ITEMS.length}問`;
-
   // 教科グリッド
   const subjectIcons = {'単語':'📖','文法':'✏️','熟語':'🧩','リスニング':'🎧'};
   const grid = document.getElementById('subject-grid');
@@ -3540,30 +3505,14 @@ function renderHome(){
   updateLastUpdatedLabel();
 }
 
-function startQuickMode(type){
-  let items = [];
-  let title = '';
-  if(type==='today'){ items = ALL_ITEMS.filter(it=>isDueToday(it.id)); title='今日の復習'; }
-  else if(type==='random'){ items = shuffle([...ALL_ITEMS]).slice(0,20); title='ランダム'; }
-  else if(type==='weak'){ items = ALL_ITEMS.filter(it=>(getSR(it.id).lapses||0)>0); title='苦手問題'; }
-  else if(type==='all'){ items = [...ALL_ITEMS]; title='全問題'; }
-
-  if(items.length===0){
-    alert(title+'に該当する問題がありません。');
-    return;
-  }
-  queue = shuffle(items);
-  if(countMode==='15') queue = queue.slice(0,15);
-  studyDirection = 'e2j';
-  startQueueSession();
-}
-
 // ════════════════════════════════════════════════════════════
 //  UNIT SELECT SCREEN (subject-scoped or all)
 // ════════════════════════════════════════════════════════════
 function goSubjectUnits(subject){
   usScope = {type:'subject', subject};
   usSelectedKeys = [];
+  countMode = 'all';
+  document.querySelectorAll('[data-count]').forEach(el=>el.classList.toggle('selected', el.dataset.count==='all'));
   document.getElementById('unitselect-title').textContent = subject + ' の単元';
   showScreen('screen-unitselect');
   buildUnitSelectGrid();
@@ -3572,6 +3521,8 @@ function goSubjectUnits(subject){
 function showAllUnits(){
   usScope = {type:'all'};
   usSelectedKeys = [];
+  countMode = 'all';
+  document.querySelectorAll('[data-count]').forEach(el=>el.classList.toggle('selected', el.dataset.count==='all'));
   document.getElementById('unitselect-title').textContent = '全単元一覧';
   showScreen('screen-unitselect');
   buildUnitSelectGrid();
@@ -3652,12 +3603,20 @@ function selectStudyDirection(d){
 function selectCountMode(c){
   countMode = c;
   document.querySelectorAll('[data-count]').forEach(el=>el.classList.toggle('selected', el.dataset.count===c));
+  updateUSStartBtn();
 }
 function updateUSStartBtn(){
   const btn = document.getElementById('us-start-btn');
-  const total = getUSSelectedItems().length;
-  btn.disabled = usSelectedKeys.length===0;
-  btn.textContent = usSelectedKeys.length>0 ? `スタート (${total}問)` : 'スタート';
+  const allSelected = getUSSelectedItems();
+  const dueSelected = allSelected.filter(it=>isDueToday(it.id));
+  const descEl = document.getElementById('today-count-desc');
+  if(descEl) descEl.textContent = usSelectedKeys.length>0 ? `復習日の${dueSelected.length}問` : '復習日が来た問題';
+
+  const total = countMode==='today' ? dueSelected.length : allSelected.length;
+  btn.disabled = usSelectedKeys.length===0 || (countMode==='today' && dueSelected.length===0);
+  if(usSelectedKeys.length===0) btn.textContent = 'スタート';
+  else if(countMode==='today' && dueSelected.length===0) btn.textContent = '今日の復習はありません';
+  else btn.textContent = `スタート (${total}問)`;
 }
 function getUSSelectedItems(){
   const list = getUSUnitList();
@@ -3669,7 +3628,12 @@ function getUSSelectedItems(){
   return items;
 }
 function startSelectedQuiz(){
-  const items = getUSSelectedItems();
+  let items = getUSSelectedItems();
+  // 「今日の復習」= スペースド・リピティションで復習日が来ている問題だけに絞る
+  if(countMode==='today'){
+    items = items.filter(it=>isDueToday(it.id));
+    if(items.length===0){ alert('選択した範囲に今日復習すべき問題はありません。'); return; }
+  }
   queue = [...items].sort((a,b)=>{
     const sa=getSR(a.id), sb=getSR(b.id);
     const ma=sa.lapses||0, mb=sb.lapses||0;
