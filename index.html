@@ -125,6 +125,7 @@
   .check-btn:hover{filter:brightness(0.96);transform:translateY(-1px);}
   .reveal-btn{width:100%;padding:16px;background:var(--dark);color:var(--white);border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.15s;}
   .reveal-btn:hover{background:#2D2D44;}
+  .qa-hint{text-align:center;font-size:13px;color:var(--gray);margin-bottom:12px;}
 
   /* ── 4-choice ── */
   .choices-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px;}
@@ -265,15 +266,15 @@
   <div class="mode-section">
     <p class="mode-label">モード</p>
     <div class="mode-row">
-      <div class="mode-btn selected" data-mode="qa" onclick="selectStudyMode('qa')">
-        <div class="mode-icon">✍️</div>
-        <div class="mode-name">問題→答え</div>
-        <div class="mode-desc">自分で書いて○×判定</div>
+      <div class="mode-btn selected" data-direction="e2j" onclick="selectStudyDirection('e2j')">
+        <div class="mode-icon" id="mode-e2j-icon">🗣️</div>
+        <div class="mode-name" id="mode-e2j-name">英語→日本語</div>
+        <div class="mode-desc" id="mode-e2j-desc">声に出す→○×判定</div>
       </div>
-      <div class="mode-btn" data-mode="choice" onclick="selectStudyMode('choice')">
-        <div class="mode-icon">🔘</div>
-        <div class="mode-name">答え→問題</div>
-        <div class="mode-desc">4択から選ぶ</div>
+      <div class="mode-btn" data-direction="j2e" onclick="selectStudyDirection('j2e')">
+        <div class="mode-icon" id="mode-j2e-icon">✍️</div>
+        <div class="mode-name" id="mode-j2e-name">日本語→英語</div>
+        <div class="mode-desc" id="mode-j2e-desc">紙に書く→○×判定</div>
       </div>
     </div>
   </div>
@@ -291,7 +292,7 @@
   <button class="start-btn" id="us-start-btn" onclick="startSelectedQuiz()" disabled>スタート</button>
 </div>
 
-<!-- ════════════ STUDY: 問題→答え (self-check) ════════════ -->
+<!-- ════════════ STUDY (self-check, 英語⇄日本語共通) ════════════ -->
 <div class="screen" id="screen-study-qa">
   <div class="quiz-header">
     <button class="back-btn" onclick="goHome()">←</button>
@@ -303,45 +304,27 @@
   </div>
   <span class="sr-badge new" id="qa-sr-badge">NEW</span>
   <div class="card">
-    <div class="card-label">問題</div>
+    <div class="card-label" id="qa-card-label">問題</div>
     <div class="card-jp" id="qa-question"></div>
     <span class="card-unit-tag" id="qa-unit-tag"></span>
   </div>
   <div id="qa-reveal-area">
+    <p class="qa-hint" id="qa-hint"></p>
     <button class="reveal-btn" onclick="revealQA()">答えを見る 👁</button>
   </div>
   <div id="qa-answer-area" class="hidden">
     <div class="answer-reveal">
-      <div class="card-label">答え</div>
+      <div class="card-label" id="qa-answer-label">答え</div>
       <div class="answer-word" id="qa-answer"></div>
       <div class="answer-memo hidden" id="qa-memo"></div>
     </div>
-    <div class="self-check-row">
+    <div class="self-check-row" id="qa-selfcheck-row">
       <button class="check-btn correct" onclick="answerQA(true)">⭕ 正解</button>
       <button class="check-btn wrong" onclick="answerQA(false)">❌ 不正解</button>
     </div>
+    <div id="qa-phonics-area"></div>
+    <button class="next-btn" id="qa-next-btn" onclick="nextQA()">次へ →</button>
   </div>
-</div>
-
-<!-- ════════════ STUDY: 答え→問題 (4-choice) ════════════ -->
-<div class="screen" id="screen-study-choice">
-  <div class="quiz-header">
-    <button class="back-btn" onclick="goHome()">←</button>
-    <div class="progress-wrap">
-      <div class="progress-text"><span id="ch-prog-text">1 / 10</span><span id="ch-unit-text"></span></div>
-      <div class="progress-bar"><div class="progress-fill" id="ch-prog-fill" style="width:0%"></div></div>
-    </div>
-    <div class="streak-badge" id="ch-streak">🔥 0</div>
-  </div>
-  <span class="sr-badge new" id="ch-sr-badge">NEW</span>
-  <div class="card">
-    <div class="card-label">これは？</div>
-    <div class="card-en" id="ch-question"></div>
-    <span class="card-unit-tag" id="ch-unit-tag"></span>
-  </div>
-  <div class="choices-grid" id="ch-choices-grid"></div>
-  <div id="ch-phonics-area"></div>
-  <button class="next-btn" id="ch-next-btn" onclick="nextChoice()">次へ →</button>
 </div>
 <div class="feedback-overlay" id="feedback-overlay"><div class="feedback-mark" id="feedback-mark"></div></div>
 
@@ -3410,9 +3393,29 @@ loadSR();
 // ════════════════════════════════════════════════════════════
 let ALL_ITEMS = [];              // {id,subject,unit,question,answer,importance,memo,...}
 let SUBJECTS = {};                // subject -> {unit -> [items]}
-let studyMode = 'qa';             // 'qa' | 'choice'
+let studyDirection = 'e2j';       // 'e2j' (英語→日本語) | 'j2e' (日本語→英語)
 let countMode = 'all';            // 'all' | '15'
 let usScope = null;               // {type:'subject', subject} | {type:'all'}
+
+// ── 教科ごとのモード設定（表示ラベル・使用フィールド・練習方法・フォニックス有無） ──
+const STUDY_MODE_CONFIG = {
+  '単語': {
+    e2j: {promptField:'question', revealField:'answer', promptLabel:'英語',   revealLabel:'日本語', label:'英語→日本語', desc:'声に出す→○×判定', icon:'🗣️', hint:'🗣️ 声に出してみよう', phonics:true},
+    j2e: {promptField:'answer',   revealField:'question', promptLabel:'日本語', revealLabel:'英語',   label:'日本語→英語', desc:'紙に書く→○×判定', icon:'✍️', hint:'✍️ 紙に書いてみよう', phonics:false},
+  },
+  '文法': {
+    e2j: {promptField:'question', revealField:'answer', promptLabel:'日本語', revealLabel:'英語', label:'問題→答え',   desc:'声に出す→○×判定', icon:'🗣️', hint:'🗣️ 声に出してみよう', phonics:false},
+    j2e: {promptField:'question', revealField:'answer', promptLabel:'日本語', revealLabel:'英語', label:'日本語→英語', desc:'紙に書く→○×判定', icon:'✍️', hint:'✍️ 紙に書いてみよう', phonics:false},
+  },
+};
+const DEFAULT_MODE_CONFIG = {
+  e2j: {promptField:'question', revealField:'answer', promptLabel:'問題', revealLabel:'答え', label:'問題→答え', desc:'声に出す→○×判定', icon:'🗣️', hint:'🗣️ 声に出してみよう', phonics:'auto'},
+  j2e: {promptField:'answer',   revealField:'question', promptLabel:'答え', revealLabel:'問題', label:'答え→問題', desc:'紙に書く→○×判定', icon:'✍️', hint:'✍️ 紙に書いてみよう', phonics:false},
+};
+function resolveModeConfig(subject, direction){
+  const table = STUDY_MODE_CONFIG[subject] || DEFAULT_MODE_CONFIG;
+  return table[direction] || DEFAULT_MODE_CONFIG[direction];
+}
 let usSelectedKeys = [];          // "subject::unit" strings
 
 let queue = [];
@@ -3551,7 +3554,7 @@ function startQuickMode(type){
   }
   queue = shuffle(items);
   if(countMode==='15') queue = queue.slice(0,15);
-  studyMode = 'qa';
+  studyDirection = 'e2j';
   startQueueSession();
 }
 
@@ -3564,6 +3567,7 @@ function goSubjectUnits(subject){
   document.getElementById('unitselect-title').textContent = subject + ' の単元';
   showScreen('screen-unitselect');
   buildUnitSelectGrid();
+  updateModeButtonLabels();
 }
 function showAllUnits(){
   usScope = {type:'all'};
@@ -3571,6 +3575,18 @@ function showAllUnits(){
   document.getElementById('unitselect-title').textContent = '全単元一覧';
   showScreen('screen-unitselect');
   buildUnitSelectGrid();
+  updateModeButtonLabels();
+}
+function updateModeButtonLabels(){
+  const subject = (usScope && usScope.type==='subject') ? usScope.subject : null;
+  const cfgE2j = subject ? resolveModeConfig(subject,'e2j') : DEFAULT_MODE_CONFIG.e2j;
+  const cfgJ2e = subject ? resolveModeConfig(subject,'j2e') : DEFAULT_MODE_CONFIG.j2e;
+  document.getElementById('mode-e2j-icon').textContent = cfgE2j.icon;
+  document.getElementById('mode-e2j-name').textContent = cfgE2j.label;
+  document.getElementById('mode-e2j-desc').textContent = cfgE2j.desc;
+  document.getElementById('mode-j2e-icon').textContent = cfgJ2e.icon;
+  document.getElementById('mode-j2e-name').textContent = cfgJ2e.label;
+  document.getElementById('mode-j2e-desc').textContent = cfgJ2e.desc;
 }
 
 function getUSUnitList(){
@@ -3629,9 +3645,9 @@ function usSelectWeak(){
   });
   updateUSStartBtn();
 }
-function selectStudyMode(m){
-  studyMode = m;
-  document.querySelectorAll('[data-mode]').forEach(el=>el.classList.toggle('selected', el.dataset.mode===m));
+function selectStudyDirection(d){
+  studyDirection = d;
+  document.querySelectorAll('[data-direction]').forEach(el=>el.classList.toggle('selected', el.dataset.direction===d));
 }
 function selectCountMode(c){
   countMode = c;
@@ -3666,30 +3682,46 @@ function startSelectedQuiz(){
 }
 
 // ════════════════════════════════════════════════════════════
-//  QUIZ SESSION (shared logic)
+//  QUIZ SESSION (統一自己採点フロー: 英語→日本語 / 日本語→英語 共通)
 // ════════════════════════════════════════════════════════════
 function startQueueSession(){
   qCurrent=0; qCorrect=0; qWrong=0; qStreak=0; qMaxStreak=0; qSessionWrong=[];
-  if(studyMode==='qa'){ showScreen('screen-study-qa'); showQAItem(); }
-  else{ showScreen('screen-study-choice'); showChoiceItem(); }
+  showScreen('screen-study-qa');
+  showQAItem();
 }
 
-// ── QA (問題→答え) self-check ──
 function showQAItem(){
   if(qCurrent>=queue.length){ showResult(); return; }
   const it = queue[qCurrent];
+  const cfg = resolveModeConfig(it.subject, studyDirection);
   const lbl = srLabel(it.id);
   const b = document.getElementById('qa-sr-badge');
   b.textContent = lbl==='new'?'NEW':lbl==='weak'?'苦手':'復習';
   b.className = `sr-badge ${lbl}`;
-  document.getElementById('qa-question').textContent = it.question;
+
+  document.getElementById('qa-card-label').textContent = cfg.promptLabel;
+  document.getElementById('qa-question').textContent = it[cfg.promptField];
   document.getElementById('qa-unit-tag').textContent = `${it.subject} / ${it.unit}`;
-  document.getElementById('qa-answer').textContent = it.answer;
+  document.getElementById('qa-hint').textContent = cfg.hint;
+
+  document.getElementById('qa-answer-label').textContent = cfg.revealLabel;
+  document.getElementById('qa-answer').textContent = it[cfg.revealField];
+
+  // フォニックス対象モードでは reveal 時にメモを出さない（正解後にまとめて表示するため）
   const memoEl = document.getElementById('qa-memo');
-  if(it.memo){ memoEl.innerHTML = `<span class="tip-icon">💡</span>${it.memo}`; memoEl.classList.remove('hidden'); }
-  else{ memoEl.classList.add('hidden'); memoEl.innerHTML=''; }
+  const showPhonicsMode = cfg.phonics===true || (cfg.phonics==='auto' && looksEnglish(it[cfg.promptField]));
+  if(!showPhonicsMode && it.memo){
+    memoEl.innerHTML = `<span class="tip-icon">💡</span>${it.memo}`;
+    memoEl.classList.remove('hidden');
+  } else {
+    memoEl.classList.add('hidden'); memoEl.innerHTML='';
+  }
+
   document.getElementById('qa-reveal-area').classList.remove('hidden');
   document.getElementById('qa-answer-area').classList.add('hidden');
+  document.getElementById('qa-selfcheck-row').classList.remove('hidden');
+  document.getElementById('qa-phonics-area').innerHTML='';
+  document.getElementById('qa-next-btn').classList.remove('visible');
   updateQuizProgress('qa');
 }
 function revealQA(){
@@ -3698,42 +3730,29 @@ function revealQA(){
 }
 function answerQA(correct){
   const it = queue[qCurrent];
+  const cfg = resolveModeConfig(it.subject, studyDirection);
   sm2Update(it.id, correct);
+  showFeedback(correct);
   if(correct){ qCorrect++; qStreak++; qMaxStreak=Math.max(qMaxStreak,qStreak); }
   else{ qWrong++; qStreak=0; qSessionWrong.push(it); }
   document.getElementById('qa-streak').textContent = `🔥 ${qStreak}`;
-  qCurrent++; showQAItem();
-}
 
-// ── Choice (答え→問題) 4択 ──
-function showChoiceItem(){
-  if(qCurrent>=queue.length){ showResult(); return; }
-  const it = queue[qCurrent];
-  const lbl = srLabel(it.id);
-  const b = document.getElementById('ch-sr-badge');
-  b.textContent = lbl==='new'?'NEW':lbl==='weak'?'苦手':'復習';
-  b.className = `sr-badge ${lbl}`;
-  document.getElementById('ch-question').textContent = it.answer;
-  document.getElementById('ch-unit-tag').textContent = `${it.subject} / ${it.unit}`;
-  document.getElementById('ch-phonics-area').innerHTML='';
-  updateQuizProgress('ch');
-
-  // 同じ教科内から誤答選択肢を作る
-  const pool = ALL_ITEMS.filter(x=>x.subject===it.subject && x.id!==it.id);
-  const distractors = shuffle(pool).slice(0,3);
-  const choices = shuffle([...distractors, it]);
-  const grid = document.getElementById('ch-choices-grid');
-  grid.innerHTML='';
-  const labels=['①','②','③','④'];
-  choices.forEach((c,i)=>{
-    const btn = document.createElement('button');
-    btn.className='choice-btn';
-    btn.innerHTML = `<span class="choice-num">${labels[i]}</span><span>${c.question}</span>`;
-    btn.onclick=()=>selectChoiceAnswer(c.id===it.id, btn, it);
-    grid.appendChild(btn);
-  });
-  document.getElementById('ch-next-btn').classList.remove('visible');
+  const showPhonicsMode = cfg.phonics===true || (cfg.phonics==='auto' && looksEnglish(it[cfg.promptField]));
+  if(correct && showPhonicsMode){
+    // 正解時のみ: 発音ボタン・IPA・フォニックス・ワンポイントをまとめて表示し、次へボタンで進む
+    document.getElementById('qa-selfcheck-row').classList.add('hidden');
+    document.getElementById('qa-next-btn').classList.add('visible');
+    showPhonicsForWord('qa-phonics-area', it[cfg.promptField], it.memo);
+    setTimeout(()=>{
+      const p=document.getElementById('qa-phonics-area');
+      if(p) p.scrollIntoView({behavior:'smooth',block:'nearest'});
+    },150);
+  } else {
+    qCurrent++; showQAItem();
+  }
 }
+function nextQA(){ qCurrent++; showQAItem(); }
+
 function showFeedback(correct){
   const mark = document.getElementById('feedback-mark');
   mark.textContent = correct?'⭕':'❌';
@@ -3741,31 +3760,6 @@ function showFeedback(correct){
   setTimeout(()=>{ mark.className='feedback-mark hide'; },400);
   setTimeout(()=>{ mark.className='feedback-mark'; },750);
 }
-function selectChoiceAnswer(correct, btn, it){
-  document.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
-  sm2Update(it.id, correct);
-  showFeedback(correct);
-  if(correct){
-    btn.classList.add('correct-ans'); qCorrect++; qStreak++; qMaxStreak=Math.max(qMaxStreak,qStreak);
-  } else {
-    btn.classList.add('wrong-ans'); qWrong++; qStreak=0; qSessionWrong.push(it);
-    document.querySelectorAll('.choice-btn').forEach(b=>{
-      const span=b.querySelector('span:last-child');
-      if(span && span.textContent===it.question) b.classList.add('correct-ans');
-    });
-  }
-  document.getElementById('ch-streak').textContent = `🔥 ${qStreak}`;
-  document.getElementById('ch-next-btn').classList.add('visible');
-  // 英単語らしければ発音パネルを表示（正解時のみ）
-  if(correct && looksEnglish(it.question)){
-    showPhonicsForWord('ch-phonics-area', it.question, it.memo);
-  }
-  setTimeout(()=>{
-    const p=document.getElementById('ch-phonics-area');
-    if(p) p.scrollIntoView({behavior:'smooth',block:'nearest'});
-  },150);
-}
-function nextChoice(){ qCurrent++; showChoiceItem(); }
 
 function updateQuizProgress(prefix){
   const total = queue.length;
@@ -3803,8 +3797,8 @@ function retryWeak(){
   if(qSessionWrong.length===0) return goHome();
   queue = shuffle([...qSessionWrong]);
   qCurrent=0; qCorrect=0; qWrong=0; qStreak=0; qMaxStreak=0; qSessionWrong=[];
-  if(studyMode==='qa'){ showScreen('screen-study-qa'); showQAItem(); }
-  else{ showScreen('screen-study-choice'); showChoiceItem(); }
+  showScreen('screen-study-qa');
+  showQAItem();
 }
 
 // ════════════════════════════════════════════════════════════
